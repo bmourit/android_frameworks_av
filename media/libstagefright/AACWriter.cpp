@@ -106,6 +106,13 @@ status_t AACWriter::addSource(const sp<MediaSource> &source) {
     if (meta->findInt32(kKeyAACProfile, &mAACProfile)) {
         ALOGI("AAC profile is changed to %d", mAACProfile);
     }
+#ifdef ACT_AUDIO
+    else {
+        // Bugfix for Actions aac profile
+        ALOGW("AAC profile not find");
+        mAACProfile = OMX_AUDIO_AACObjectLC;
+    }
+#endif
 
     mSource = source;
     return OK;

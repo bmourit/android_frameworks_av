@@ -1099,7 +1099,77 @@ void MediaPlayerService::Client::notify(
             client->mNextClient->mClient->notify(MEDIA_INFO, MEDIA_INFO_STARTED_AS_NEXT, 0, obj);
         }
     }
+#ifdef ACT_AUDIO
+	if (MEDIA_SUB == msg) {
+		#if 0
+        packet_header_t *packet = (packet_header_t *)ext1;
+        if (packet == NULL) {
+            ALOGW("packet null");
+            return;
+        }
 
+        int size = ext2;//packet->block_len + sizeof(packet_header_t);
+        sp<MemoryHeapBase> heap = new MemoryHeapBase(size, 0, "MediaPlayerService");
+        if (heap == NULL) {
+            ALOGE("failed to create MemoryDealer");
+            return;
+        }
+
+        sp<IMemory> shmem = new MemoryBase(heap, 0, size);
+        if (shmem == NULL) {
+            ALOGE("not enough memory for shmem size=%u", size);
+            return;
+        }
+        memcpy(shmem->pointer(), (char *)packet, size);
+        client->mClient->postData(msg, shmem);
+     #endif
+    } else if(msg==MEDIA_REDIRECT){  
+    	char * uri  = (char *)malloc(ext2);
+    	if (uri != NULL) {
+    		ALOGI("notify: malloc %d uri OK", ext2);
+	    	memset(uri, 0, ext2);
+	    	strncpy(uri, (char *)ext1, ext2);
+    	}else {
+    		ALOGE("notify: malloc new uri failed when redirect palyer");
+    	}
+    	
+		ALOGI("notify: New Url  len: %d uri: %s", ext2, uri); 			
+		player_type playerType = MediaPlayerFactory::getPlayerType(client, uri);
+		if (client->mPlayer->playerType() == playerType) {
+			ALOGI("notify: processing redirect case and meet the same player type as before, and len: %d", ext2);
+			client->mClient->notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, ERROR_IO, obj);
+		}else { 	
+			client->setDataSource(uri, NULL);	
+			client->prepareAsync();
+		} 
+
+		if (uri) {
+			free(uri);
+			uri = NULL;
+			ALOGI("notify: free uri OK");
+		}
+	}else if (msg == MEDIA_REDIRECT_NUPLAYER) {
+		char * uri  = (char *)malloc(ext2);
+		if (uri != NULL) {
+			ALOGI("notify: malloc %d uri OK", ext2);
+			memset(uri, 0, ext2);
+			strncpy(uri, (char *)ext1, ext2);
+		}else {
+			ALOGE("notify: malloc new uri failed when redirect palyer");
+		}
+    	
+		ALOGI("notify: New Url  len: %d uri: %s client->mPlayerType: %d", ext2, uri, client->mPlayerType); 	
+		client->mPlayerType = NU_PLAYER;
+		client->setDataSource(uri, NULL);	
+		client->prepareAsync();
+
+		if (uri) {
+			free(uri);
+			uri = NULL;
+			ALOGI("notify: free uri OK");
+		}
+	}else{
+#endif
     if (MEDIA_INFO == msg &&
         MEDIA_INFO_METADATA_UPDATE == ext1) {
         const media::Metadata::Type metadata_type = ext2;
@@ -1116,6 +1186,9 @@ void MediaPlayerService::Client::notify(
     if (c != NULL) {
         ALOGV("[%d] notify (%p, %d, %d, %d)", client->mConnId, cookie, msg, ext1, ext2);
         c->notify(msg, ext1, ext2, obj);
+#ifdef ACT_AUDIO
+        }
+#endif
     }
 }
 

@@ -46,6 +46,11 @@ enum media_event_type {
     MEDIA_ERROR             = 100,
     MEDIA_INFO              = 200,
     MEDIA_QOE               = 300,
+#ifdef ACT_AUDIO
+    MEDIA_SUB               = 400,
+    MEDIA_REDIRECT          = 500,
+    MEDIA_REDIRECT_NUPLAYER = 700,
+#endif
 };
 
 // Generic error codes for the media player framework.  Errors are fatal, the

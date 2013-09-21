@@ -22,6 +22,10 @@
 #include <utils/Log.h>
 #include <media/AudioParameter.h>
 #include "StagefrightRecorder.h"
+#ifdef ACT_AUDIO
+#include "ActAudioEncoder.h"
+#include <media/stagefright/ActAudioWriter.h>
+#endif
 
 #include <binder/IPCThreadState.h>
 #include <binder/IServiceManager.h>
@@ -836,6 +840,14 @@ status_t StagefrightRecorder::start() {
         case OUTPUT_FORMAT_QCP:
             status = startExtendedRecording( );
             break;
+#endif
+
+#ifdef ACT_AUDIO
+        case OUTPUT_FORMAT_WAV:
+        case OUTPUT_FORMAT_MP3:            
+        case OUTPUT_FORMAT_WMA:
+            status = startActAudioRecording();
+			break;
 #endif
 
         case OUTPUT_FORMAT_WAVE:
@@ -1863,9 +1875,15 @@ status_t StagefrightRecorder::reset() {
     mVideoHeight   = 144;
     mFrameRate     = -1;
     mVideoBitRate  = 192000;
+#ifdef ACT_AUDIO
+    mSampleRate    = 8000;
+    mAudioChannels = 1;
+    mAudioBitRate  = 12200;
+#else
     mSampleRate    = 0;
     mAudioChannels = 0;
     mAudioBitRate  = 0;
+#endif
     mInterleaveDurationUs = 0;
     mIFramesIntervalSec = 1;
     mAudioSourceNode = 0;

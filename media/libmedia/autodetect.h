@@ -26,6 +26,9 @@ enum {
     kEncodingGBK                = (1 << 1),
     kEncodingBig5               = (1 << 2),
     kEncodingEUCKR              = (1 << 3),
+#ifdef ACT_AUDIO
+    kEncodingGB2312             = (1 << 4),
+#endif
 
     kEncodingAll                = (kEncodingShiftJIS | kEncodingGBK | kEncodingBig5 | kEncodingEUCKR),
 };

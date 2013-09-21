@@ -61,6 +61,41 @@ extern const char *MEDIA_MIMETYPE_CONTAINER_WVM;
 extern const char *MEDIA_MIMETYPE_TEXT_3GPP;
 extern const char *MEDIA_MIMETYPE_TEXT_SUBRIP;
 
+#ifdef ACT_AUDIO
+// Actions video decode
+extern const char *MEDIA_MIMETYPE_VIDEO_VC1;
+extern const char *MEDIA_MIMETYPE_VIDEO_DIV3;
+extern const char *MEDIA_MIMETYPE_VIDEO_FLV1;
+extern const char *MEDIA_MIMETYPE_VIDEO_RV;
+extern const char *MEDIA_MIMETYPE_VIDEO_AVS;
+extern const char *MEDIA_MIMETYPE_VIDEO_MJPG;
+extern const char *MEDIA_MIMETYPE_VIDEO_WMV8;
+extern const char *MEDIA_MIMETYPE_VIDEO_RVG2;
+extern const char *MEDIA_MIMETYPE_VIDEO_VP8;
+extern const char *MEDIA_MIMETYPE_VIDEO_VP6;
+// Actions audio decode
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_AAC;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_MP3;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_WMASTD;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_WMALSL;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_WMAPRO;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_COOK;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_PCM;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_OGG;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_DTS;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_AC3;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_APE;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_FLAC;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_ACELP;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_MPC;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_AIFF;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_AMR;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_SAMPLE;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_ALAC;
+extern const char *MEDIA_MIMETYPE_AUDIO_ACT_AWB;
+// end actions av
+#endif
+
 }  // namespace android
 
 #endif  // MEDIA_DEFS_H_

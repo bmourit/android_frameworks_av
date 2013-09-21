@@ -49,6 +49,9 @@ const MediaProfiles::NameToTagMap MediaProfiles::sAudioEncoderNameMap[] = {
     {"heaac",  AUDIO_ENCODER_HE_AAC},
     {"aaceld", AUDIO_ENCODER_AAC_ELD},
     {"lpcm",  AUDIO_ENCODER_LPCM},
+#ifdef ACT_AUDIO
+    {"mp3"  ,  AUDIO_ENCODER_MP3},
+#endif
 };
 
 const MediaProfiles::NameToTagMap MediaProfiles::sFileFormatMap[] = {
@@ -815,6 +818,9 @@ MediaProfiles::createDefaultAudioEncoders(MediaProfiles *profiles)
     profiles->mAudioEncoders.add(createDefaultAmrNBEncoderCap());
     profiles->mAudioEncoders.add(createDefaultAacEncoderCap());
     profiles->mAudioEncoders.add(createDefaultLpcmEncoderCap());
+#ifdef ACT_HARDWARE
+    profiles->mAudioEncoders.add(createDefaultMP3EncoderCap());
+#endif
 }
 
 /*static*/ void
@@ -862,6 +868,15 @@ MediaProfiles::createDefaultLpcmEncoderCap()
     return new MediaProfiles::AudioEncoderCap(
         AUDIO_ENCODER_LPCM, 768000, 4608000, 48000, 48000, 1, 6);
 }
+
+#ifdef ACT_AUDIO
+/*static*/ MediaProfiles::AudioEncoderCap*
+MediaProfiles::createDefaultMP3EncoderCap()
+{
+    return new MediaProfiles::AudioEncoderCap(
+        AUDIO_ENCODER_MP3, 64000, 156000, 8000, 48000, 1, 2);
+}
+#endif
 
 /*static*/ void
 MediaProfiles::createDefaultImageEncodingQualityLevels(MediaProfiles *profiles)

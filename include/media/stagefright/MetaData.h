@@ -167,6 +167,17 @@ enum {
 
     kKeyPssh              = 'pssh',  // raw data
     kKeyTunnelException   = 'Ntnl', // not tunnel
+#ifdef ACT_AUDIO
+    // Actions' Media Extractor info structure
+    kKeyActMediaInfo      = 'actm',  // pointer to media_info_t
+    kKeyActVDPrv          = 'actv',  // private data for video codecs
+    kKeyActFrmRate        = 'afps',  // frame rate  for video codecs int64_t
+    kKeyActMusicInfo      = 'acta',  // pointer to audio_info_t
+    kKeyActCreateThumbnail      = 'acct',
+    kKeyActNuSeekedListTimeBase = 'nstb',
+    kKeyActMaxSegDuration	= 'amsd',
+    kKeyActStreamingFlag        = 'acsf' 
+#endif
 };
 
 enum {

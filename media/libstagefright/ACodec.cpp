@@ -48,6 +48,17 @@
 #include "include/avc_utils.h"
 #include "include/QCUtils.h"
 
+#ifdef ACT_AUDIO
+#include <actal_posix_dev.h>
+#include<ALdec_plugin.h>
+#include "gralloc_priv.h"
+#include "ACT_OMX_Index.h"
+
+#define ACTIONS_PREFIX		"OMX.Action"
+#define ACTIONS_VIDEO_DECODER 	ACTIONS_PREFIX".Video.Decoder"
+#define ACTIONS_AUDIO_DECODER 	ACTIONS_PREFIX".Audio.Decoder"
+#endif
+
 namespace android {
 
 template<class T>
@@ -543,6 +554,10 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
 
 status_t ACodec::allocateOutputBuffersFromNativeWindow() {
     OMX_PARAM_PORTDEFINITIONTYPE def;
+#ifdef ACT_AUDIO
+    int grallocColorFormat;
+    int result;
+#endif
     InitOMXParams(&def);
     def.nPortIndex = kPortIndexOutput;
 
@@ -553,6 +568,48 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
         return err;
     }
 
+#ifdef ACT_AUDIO
+    err = mNativeWindow->query(mNativeWindow.get(),NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER,&result);
+	if(err){
+	  ALOGE("  mAnw->query  NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER = %d !",result);
+	}else{
+		ALOGE(" NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER  = %d !",result);
+	}
+	
+	/*查询 window的实体类型信息，此处返回的应该是surfaceTextureClinent */
+	err =mNativeWindow->query(mNativeWindow.get(), NATIVE_WINDOW_CONCRETE_TYPE, &result);
+	if(err){
+		ALOGE(" mAnw->query  NATIVE_WINDOW_CONCRETE_TYPE = %d !",result);
+	}else{
+		ALOGE(" NATIVE_WINDOW_CONCRETE_TYPE  = %d !",result);
+	}
+
+    err = native_window_set_scaling_mode(mNativeWindow.get(),
+            NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW);
+    if (err != OK) {
+        return err;
+    }
+    switch(def.format.video.eColorFormat)
+    {
+    	case OMX_COLOR_FormatYUV420Planar:
+				grallocColorFormat =  HAL_PIXEL_FORMAT_ACT_NV12;
+				break;
+			case OMX_COLOR_FormatYUV422Planar:
+				grallocColorFormat =  HAL_PIXEL_FORMAT_ACT_NV12;
+				break;
+			default:
+				ALOGE("Format: %d not support! Use HAL_PIXEL_FORMAT_YV12",def.format.video.eColorFormat);
+				grallocColorFormat =  HAL_PIXEL_FORMAT_ACT_NV12;
+				break;
+    }
+	 def.format.video.eColorFormat=(OMX_COLOR_FORMATTYPE)grallocColorFormat;
+
+    err = native_window_set_buffers_geometry(
+            mNativeWindow.get(),
+            def.format.video.nStride,//merge zh
+            (def.format.video.nFrameHeight+15)&(~15), //merge zh
+            def.format.video.eColorFormat);
+#else
 #ifdef USE_SAMSUNG_COLORFORMAT
     OMX_COLOR_FORMATTYPE eNativeColorFormat = def.format.video.eColorFormat;
     setNativeWindowColorFormat(eNativeColorFormat);
@@ -568,6 +625,7 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
             def.format.video.nFrameWidth,
             def.format.video.nFrameHeight,
             def.format.video.eColorFormat);
+#endif
 #endif
 
     if (err != 0) {
@@ -747,8 +805,27 @@ status_t ACodec::cancelBufferToNativeWindow(BufferInfo *info) {
 }
 
 ACodec::BufferInfo *ACodec::dequeueBufferFromNativeWindow() {
+#ifdef ACT_AUDIO
+    size_t i;
+    size_t owned;
+    size_t totalBuffers;
+#endif
     ANativeWindowBuffer *buf;
     int fenceFd = -1;
+#ifdef ACT_AUDIO
+    totalBuffers = mBuffers[kPortIndexOutput].size();
+    owned = 0;
+    for (i = 0; i < totalBuffers; i++) {
+        BufferInfo *info = &mBuffers[kPortIndexOutput].editItemAt(i);
+        if (info->mStatus < BufferInfo::OWNED_BY_NATIVE_WINDOW) {
+            owned += 1;
+        }
+    }
+    if (owned >= 18) {
+        // stop request more video buffers if we already have enough
+        return NULL;
+    }
+#endif
     if (native_window_dequeue_buffer_and_wait(mNativeWindow.get(), &buf) != 0) {
         ALOGE("dequeueBuffer failed.");
         return NULL;
@@ -883,6 +960,10 @@ status_t ACodec::setComponentRole(
             "audio_decoder.flac", "audio_encoder.flac" },
         { MEDIA_MIMETYPE_AUDIO_MSGSM,
             "audio_decoder.gsm", "audio_encoder.gsm" },
+#ifdef ACT_AUDIO
+        { MEDIA_MIMETYPE_AUDIO_ACT_AAC,
+            "audio_decoder.aac", ""},
+@endif
     };
 
     static const size_t kNumMimeToRole =
@@ -999,6 +1080,10 @@ status_t ACodec::configureCodec(
                     || !msg->findInt32("height", &height)) {
                 err = INVALID_OPERATION;
             } else {
+#ifdef ACT_AUDIO
+            video_display_w = width;
+            video_display_h = height;
+#endif
                 err = setupVideoDecoder(mime, width, height);
             }
         }
@@ -1110,6 +1195,34 @@ status_t ACodec::configureCodec(
     } else if (!strcmp("OMX.Nvidia.aac.decoder", mComponentName.c_str())) {
         err = setMinBufferSize(kPortIndexInput, 8192);  // XXX
     }
+#ifdef ACT_AUDIO
+    if(!strcmp(mComponentName.c_str(), ACTIONS_AUDIO_DECODER) )  
+    {
+      OMX_AUDIO_PARAM_PCMMODETYPE pcmParams;
+      InitOMXParams(&pcmParams);
+      pcmParams.nPortIndex = kPortIndexInput;
+      err = mOMX->getParameter(
+            mNode, OMX_IndexParamAudioPcm, &pcmParams, sizeof(pcmParams));
+      if (err != OK) {
+        return err;
+      }
+      int32_t numChannels, sampleRate;
+      msg->findInt32("channel-count", &numChannels);
+      msg->findInt32("sample-rate", &sampleRate);
+      ALOGE("*****************************%s  numChannels=%d sampleRate=%d", __FUNCTION__,pcmParams.nChannels, pcmParams.nSamplingRate);
+      ALOGE("numChannels=%d sampleRate=%d",numChannels,sampleRate);
+      if(numChannels>2) //大于2声道必须强行改为2声道
+      {
+                    ALOGE("numChannels must small than 2 \n");
+                    numChannels=2;                  
+       }
+       pcmParams.nSamplingRate=sampleRate;
+       pcmParams.nChannels=numChannels;
+       err = mOMX->setParameter(
+                        mNode, OMX_IndexParamAudioPcm, &pcmParams, sizeof(pcmParams));
+       ALOGE("*****************************\n");  
+    }
+#endif
 
     return err;
 }
@@ -2325,6 +2438,18 @@ void ACodec::sendFormatChange(const sp<AMessage> &reply) {
                     rect.nWidth = videoDef->nFrameWidth;
                     rect.nHeight = videoDef->nFrameHeight;
                 }
+#ifdef ACT_AUDIO
+            
+            if(!strcmp(mComponentName.c_str(), ACTIONS_VIDEO_DECODER)){                	
+                	notify->setRect(
+                            "crop",
+                            0, 0,
+                            video_display_w - 1,
+                            video_display_h - 1);
+                }
+                else
+                {
+#endif
 
                 CHECK_GE(rect.nLeft, 0);
                 CHECK_GE(rect.nTop, 0);

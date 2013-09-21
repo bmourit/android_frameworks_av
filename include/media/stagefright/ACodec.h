@@ -194,6 +194,10 @@ private:
 
     bool mChannelMaskPresent;
     int32_t mChannelMask;
+#ifdef ACT_AUDIO
+    int32_t video_display_w;
+    int32_t video_display_h;
+#endif
 
     bool mInSmoothStreamingMode;
 
@@ -296,6 +300,13 @@ private:
     void onSignalEndOfInputStream();
 
     DISALLOW_EVIL_CONSTRUCTORS(ACodec);
+
+#ifdef ACT_AUDIO
+    sp<ABuffer> special_data;
+    int special_data_cpy_flag;    
+    int mpeg4_special_data_flag;
+    bool mIsCodecNeedFlush;
+#endif
 };
 
 }  // namespace android

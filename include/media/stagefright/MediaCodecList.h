@@ -64,7 +64,11 @@ private:
     struct CodecInfo {
         AString mName;
         bool mIsEncoder;
+#ifdef ACT_AUDIO
+	uint64_t mTypes;
+#else
         uint32_t mTypes;
+#endif
         uint32_t mQuirks;
     };
 
