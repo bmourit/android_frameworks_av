@@ -11,6 +11,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 
+ifneq ($(TARGET_BOARD_PLATFORM),ATM702X)
 LOCAL_SRC_FILES:= AudioParameter.cpp
 LOCAL_MODULE:= libaudioparameter
 LOCAL_MODULE_TAGS := optional
@@ -19,6 +20,7 @@ LOCAL_SHARED_LIBRARIES := libutils libcutils
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+endif
 
 LOCAL_SRC_FILES:= \
     AudioTrack.cpp \
@@ -80,7 +82,7 @@ LOCAL_SRC_FILES += \
     IDirectTrack.cpp \
     IDirectTrackClient.cpp
 
-ifeq ($(TARGET_QCOM_AUDIO_VARIANT),caf)
+ifneq ($(filter caf bfam,$(TARGET_QCOM_AUDIO_VARIANT)),)
 ifeq ($(BOARD_USES_ALSA_AUDIO),true)
     LOCAL_CFLAGS += -DQCOM_VOIP_ENABLED
 else

@@ -30,7 +30,9 @@
 #include <media/stagefright/Utils.h>
 
 #include "include/avc_utils.h"
-
+#ifdef ACT_AUDIO
+#include "actal_posix_dev.h"
+#endif
 #include <netinet/in.h>
 
 namespace android {
@@ -38,6 +40,9 @@ namespace android {
 ElementaryStreamQueue::ElementaryStreamQueue(Mode mode, uint32_t flags)
     : mMode(mode),
       mFlags(flags) {
+#ifdef ACT_AUDIO
+	  init_buf = (int8_t *)actal_malloc(12);
+#endif
 }
 
 sp<MetaData> ElementaryStreamQueue::getFormat() {
@@ -54,6 +59,14 @@ void ElementaryStreamQueue::clear(bool clearFormat) {
     if (clearFormat) {
         mFormat.clear();
     }
+#ifdef ACT_AUDIO
+    if(init_buf != NULL)
+    {
+	    actal_free(init_buf);
+	    //fixme:when use actaudio,init_buf should not be here
+	    init_buf = NULL;
+	}
+#endif
 }
 
 static bool IsSeeminglyValidADTSHeader(const uint8_t *ptr, size_t size) {
@@ -488,6 +501,12 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitAAC() {
             mBuffer->size() - offset);
     mBuffer->setRange(0, mBuffer->size() - offset);
 
+#ifdef ACT_AUDIO
+	if(timeUs == 0ll) {
+		ALOGD("tsa %lld",timeUs);
+		timeUs = 10;
+	}
+#endif
     accessUnit->meta()->setInt64("timeUs", timeUs);
 
     return accessUnit;
@@ -625,7 +644,11 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitH264() {
 
             int64_t timeUs = fetchTimestamp(nextScan);
             CHECK_GE(timeUs, 0ll);
-
+#ifdef ACT_AUDIO
+			if(timeUs == 0ll) {
+				ALOGD("tsv %lld",timeUs);
+			}
+#endif
             accessUnit->meta()->setInt64("timeUs", timeUs);
 
             if (mFormat == NULL) {
