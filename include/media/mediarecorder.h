@@ -89,16 +89,15 @@ enum audio_encoder {
     AUDIO_ENCODER_AAC = 3,
     AUDIO_ENCODER_HE_AAC = 4,
     AUDIO_ENCODER_AAC_ELD = 5,
-
-#ifdef ACT_AUDIO
-    AUDIO_ENCODER_PCM = 6,
-    AUDIO_ENCODER_ADPCM = 7,
-    AUDIO_ENCODER_MP3 = 8,    
-    AUDIO_ENCODER_WMA = 9,
-#else
     AUDIO_ENCODER_EVRC = 6,
     AUDIO_ENCODER_QCELP = 7,
     AUDIO_ENCODER_LPCM = 8,
+
+#ifdef ACT_AUDIO
+    AUDIO_ENCODER_PCM = 9,
+    AUDIO_ENCODER_ADPCM = 10,
+    AUDIO_ENCODER_MP3 = 11,    
+    AUDIO_ENCODER_WMA = 12,
 #endif
 
     AUDIO_ENCODER_LIST_END // must be the last - used to validate the audio encoder type
