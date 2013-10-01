@@ -48,6 +48,7 @@ const MediaProfiles::NameToTagMap MediaProfiles::sAudioEncoderNameMap[] = {
     {"aac",    AUDIO_ENCODER_AAC},
     {"heaac",  AUDIO_ENCODER_HE_AAC},
     {"aaceld", AUDIO_ENCODER_AAC_ELD},
+    {"lpcm",  AUDIO_ENCODER_LPCM},
 #ifdef ACT_AUDIO
     {"mp3"  ,  AUDIO_ENCODER_MP3},
 #endif
