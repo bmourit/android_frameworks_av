@@ -24,14 +24,16 @@
 #include "include/MPEG4Extractor.h"
 #include "include/WAVExtractor.h"
 #include "include/OggExtractor.h"
+#ifndef ACT_AUDIO
 #include "include/PCMExtractor.h"
+#include "include/ExtendedExtractor.h"
+#endif
 #include "include/MPEG2PSExtractor.h"
 #include "include/MPEG2TSExtractor.h"
 #include "include/DRMExtractor.h"
 #include "include/WVMExtractor.h"
 #include "include/FLACExtractor.h"
 #include "include/AACExtractor.h"
-#include "include/ExtendedExtractor.h"
 
 #ifdef ACT_AUDIO
 #include "include/AwesomePlayer.h"
@@ -106,6 +108,7 @@ sp<MediaExtractor> MediaExtractor::Create(
              mime, confidence);
     }
     // bool isDrm = false;
+
 #else
         const sp<DataSource> &source, const char *mime) {
     sp<AMessage> meta;

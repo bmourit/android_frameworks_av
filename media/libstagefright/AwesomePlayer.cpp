@@ -53,7 +53,9 @@
 #endif
 #include <media/stagefright/DataSource.h>
 #include <media/stagefright/FileSource.h>
+#ifndef ACT_AUDIO
 #include <media/stagefright/FMRadioSource.h>
+#endif
 #include <media/stagefright/MediaBuffer.h>
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/MediaExtractor.h>
@@ -448,7 +450,11 @@ status_t AwesomePlayer::setDataSource(const sp<IStreamSource> &source) {
 
 status_t AwesomePlayer::setDataSource_l(
         const sp<DataSource> &dataSource) {
+#ifdef ACT_AUDIO
+    sp<MediaExtractor> extractor = MediaExtractor::Create(dataSource,NULL,this);
+#else
     sp<MediaExtractor> extractor = MediaExtractor::Create(dataSource);
+#endif
 
     if (extractor == NULL) {
         return UNKNOWN_ERROR;
@@ -552,15 +558,17 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor) {
                     &mStats.mTracks.editItemAt(mStats.mVideoTrackIndex);
                 stat->mMIME = mime.string();
             }
-        } else if (!haveAudio && !strncasecmp(mime.string(), "audio/", 6) &&
 #ifdef ACT_AUDIO
+        } else if (!haveAudio && !strncasecmp(mime.string(), "audio/", 6)) {
 		if (!(strncasecmp(mime.string(), "audio/unsupport", sizeof("audio/unsupport")))) {
 			ALOGE("setDataSource_l: unsupport audio format(%s)!!!", mime.string());
 			haveAudio = false;
 			continue;
 		}
-#endif
+#else
+        } else if (!haveAudio && !strncasecmp(mime.string(), "audio/", 6) &&
                     !QCUtils::ShellProp::isAudioDisabled()) {
+#endif
             setAudioSource(extractor->getTrack(i));
             haveAudio = true;
             mActiveAudioTrackIndex = i;
@@ -766,7 +774,7 @@ void AwesomePlayer::notifyListener_l(int msg, int ext1, int ext2) {
 
 bool AwesomePlayer::getBitrate(int64_t *bitrate) {
     off64_t size;
-    if (mDurationUs > 0 && mCachedSource != NULL
+    if (mDurationUs >= 0 && mCachedSource != NULL
             && mCachedSource->getSize(&size) == OK) {
         *bitrate = size * 8000000ll / mDurationUs;  // in bits/sec
         return true;
@@ -1192,7 +1200,13 @@ status_t AwesomePlayer::play_l() {
                 sendErrorNotification = true;
             }
 #endif
+
+#ifdef ACT_AUDIO
+            status_t err = startAudioPlayer_l(
+                    false /* sendErrorNotification */);
+#else
             status_t err = startAudioPlayer_l(sendErrorNotification);
+#endif
 
             if (err != OK) {
                 delete mAudioPlayer;
@@ -1602,8 +1616,12 @@ status_t AwesomePlayer::getPosition(int64_t *positionUs) {
 status_t AwesomePlayer::seekTo(int64_t timeUs) {
     ATRACE_CALL();
 
+#ifdef ACT_AUDIO
+    if (mExtractorFlags & MediaExtractor::CAN_SEEK) {
+#else
     if (((timeUs == 0) && (mExtractorFlags & MediaExtractor::CAN_SEEK_TO_ZERO)) ||
         (mExtractorFlags & MediaExtractor::CAN_SEEK)) {
+#endif
         Mutex::Autolock autoLock(mLock);
         return seekTo_l(timeUs);
     }
@@ -2219,9 +2237,6 @@ void AwesomePlayer::onVideoEvent() {
     }
 
     int64_t timeUs;
-#ifdef ACT_AUDIO
-    int32_t framewidth;
-#endif
     CHECK(mVideoBuffer->meta_data()->findInt64(kKeyTime, &timeUs));
     if ((mLastVideoTimeUs != timeUs)
           && (mLastVideoTimeUs > 0)
@@ -2271,13 +2286,6 @@ void AwesomePlayer::onVideoEvent() {
     TimeSource *ts =
         ((mFlags & AUDIO_AT_EOS) || !(mFlags & AUDIOPLAYER_STARTED))
             ? &mSystemTimeSource : mTimeSource;
-
-#ifdef ACT_AUDIO
-    if(mVideoSource->getFormat()->findInt32(kKeyWidth,&framewidth) && framewidth>3840){
-    	ts=&mSystemTimeSource;
-  
-    }
-#endif
 
     if (mFlags & FIRST_FRAME) {
         modifyFlags(FIRST_FRAME, CLEAR);
@@ -2717,8 +2725,8 @@ status_t AwesomePlayer::finishSetDataSource_l() {
                         sp<AMessage> meta;
                         if (!dataSource->sniff(&tmp, &confidence, &meta)) {
 #ifdef ACT_AUDIO
-                         //   mLock.lock();
-                         //   return UNKNOWN_ERROR;
+                         // mLock.lock();
+                         // return UNKNOWN_ERROR;
 			    break;
 #else
                             mLock.lock();
@@ -3432,15 +3440,15 @@ status_t AwesomePlayer::dump(int fd, const Vector<String16> &args) const {
 
         if ((ssize_t)i == mStats.mVideoTrackIndex) {
             fprintf(out,
-#ifdef ACT_AUDIO
-                    "   videoDimensions(%d x %d), "
-                    "numVideoFramesDecoded(%lld), "
-                    "numVideoFramesDropped(%lld)\n",
-                    mStats.mVideoWidth,
-                    mStats.mVideoHeight,
-                    mStats.mNumVideoFramesDecoded,
-                    mStats.mNumVideoFramesDropped);
-#else
+// #ifdef ACT_AUDIO
+//                    "   videoDimensions(%d x %d), "
+//                    "numVideoFramesDecoded(%lld), "
+//                    "numVideoFramesDropped(%lld)\n",
+//                    mStats.mVideoWidth,
+//                    mStats.mVideoHeight,
+//                    mStats.mNumVideoFramesDecoded,
+//                    mStats.mNumVideoFramesDropped);
+//#else
                     "   videoDimensions(%d x %d)\n"
                     "   Total Video Frames Decoded(%lld)\n"
                     "   Total Video Frames Rendered(%lld)\n"
@@ -3468,7 +3476,7 @@ status_t AwesomePlayer::dump(int fd, const Vector<String16> &args) const {
                     mStats.mMaxTimeSyncLoss/1000,
                     (mFlags & AT_EOS) > 0,
                     (mFlags & PLAYING) > 0);
-#endif
+//#endif
         }
     }
 

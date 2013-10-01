@@ -239,7 +239,7 @@ private:
     status_t mPrepareResult;
     status_t mStreamDoneStatus;
 #ifdef ACT_AUDIO
-    bool mUsingMidwareAudioDecFlag;//SH
+    bool mUsingMidwareAudioDecFlag;
 #endif
 
     void postVideoEvent_l(int64_t delayUs = -1);
