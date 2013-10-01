@@ -4,6 +4,13 @@ include $(CLEAR_VARS)
 include frameworks/av/media/libstagefright/codecs/common/Config.mk
 
 LOCAL_SRC_FILES:=                         \
+        ActAudioExtractor.cpp             \
+        ActDataSource.cpp                 \
+        ActAudioDownMix.cpp               \
+        ActAudioDecoder.cpp               \
+        ActAudioEncoder.cpp               \
+        ActAudioWriter.cpp                \
+	ActVideoExtractor.cpp              \
         ACodec.cpp                        \
         AACExtractor.cpp                  \
         AACWriter.cpp                     \
@@ -63,12 +70,18 @@ LOCAL_SRC_FILES:=                         \
         QCUtils.cpp                       \
 
 LOCAL_C_INCLUDES:= \
+	$(call include-path-for, alsp) \
         $(TOP)/frameworks/av/include/media/stagefright/timedtext \
         $(TOP)/frameworks/native/include/media/hardware \
         $(TOP)/frameworks/native/include/media/openmax \
         $(TOP)/external/flac/include \
         $(TOP)/external/tremolo \
-        $(TOP)/external/openssl/include
+        $(TOP)/external/openssl/include \
+        $(TOP)/frameworks/av/media/libstagefright/vendor/al_libc \
+        $(TOP)/frameworks/av/include/alsp/inc \
+        $(TOP)/hardware/libhardware/include/hardware \
+	$(TOP)/frameworks/av/media/libstagefright/vendor/mmminfo \
+	$(TOP)/frameworks/av/include/alsp/inc/common
 
 ifneq ($(TI_CUSTOM_DOMX_PATH),)
 LOCAL_C_INCLUDES += $(TI_CUSTOM_DOMX_PATH)/omx_core/inc
@@ -148,6 +161,8 @@ LOCAL_STATIC_LIBRARIES := \
         libstagefright_httplive \
         libstagefright_id3 \
         libFLAC \
+	libmmminfo \
+	libid3parser
 
 LOCAL_SRC_FILES += \
         chromium_http_stub.cpp
@@ -160,9 +175,11 @@ LOCAL_SHARED_LIBRARIES += \
         libstagefright_enc_common \
         libstagefright_avc_common \
         libstagefright_foundation \
-        libdl
+        libdl                     \
+        libalc \
 
 LOCAL_CFLAGS += -Wno-multichar
+LOCAL_CFLAGS += -DTURN_ON_MIDDLEWARE_FLAG
 
 ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT), true)
 LOCAL_CFLAGS += -DUSE_SAMSUNG_COLORFORMAT

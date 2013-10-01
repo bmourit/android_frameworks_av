@@ -53,7 +53,7 @@ LOCAL_C_INCLUDES :=                                                 \
     $(TOP)/frameworks/native/include/media/openmax                  \
     $(TOP)/external/tremolo/Tremolo                                 \
 ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-LOCAL_C_INCLUDES := \
+LOCAL_C_INCLUDES += \
     $(TOP)/frameworks/av/include/alsp/inc \
     $(TOP)/frameworks/av/include/alsp/inc/common \
 endif
