@@ -981,7 +981,7 @@ status_t ACodec::setComponentRole(
 #ifdef ACT_AUDIO
         { MEDIA_MIMETYPE_AUDIO_ACT_AAC,
             "audio_decoder.aac", ""},
-@endif
+#endif
     };
 
     static const size_t kNumMimeToRole =
@@ -3937,10 +3937,11 @@ void ACodec::LoadedToIdleState::stateEntered() {
 	//			   bufferId, graphicBuffer.get());
 		}
 #endif
-        mCodec->signalError(OMX_ErrorallocateBuffersFailed, OMX_ErrorallocateBuffersFailed);
-#else
-        mCodec->signalError(OMX_ErrorUndefined, err);
+//        mCodec->signalError(OMX_ErrorallocateBuffersFailed, OMX_ErrorallocateBuffersFailed);
+//#else
 #endif
+        mCodec->signalError(OMX_ErrorUndefined, err);
+//#endif
         mCodec->changeState(mCodec->mLoadedState);
     }
 }
