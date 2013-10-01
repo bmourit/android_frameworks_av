@@ -504,7 +504,13 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
                         ? OMXCodec::kRequiresAllocateBufferOnInputPorts
                         : OMXCodec::kRequiresAllocateBufferOnOutputPorts;
 
+#ifdef ACT_AUDIO
+                //if (portIndex == kPortIndexInput && (mFlags & kFlagIsSecure))
+                if (portIndex == kPortIndexInput && !mIsEncoder) {
+                   if(mOMX->livesLocally(mNode, getpid())) {
+#else
                 if (portIndex == kPortIndexInput && (mFlags & kFlagIsSecure)) {
+#endif
                     mem.clear();
 
                     void *ptr;
@@ -513,6 +519,12 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
                             &ptr);
 
                     info.mData = new ABuffer(ptr, def.nBufferSize);
+#ifdef ACT_AUDIO
+                   } else {
+  			err = mOMX->allocateBufferWithBackup(
+                        mNode, portIndex, mem, &info.mBufferID);
+                   }
+#endif
                 } else if (mQuirks & requiresAllocateBufferBit) {
                     err = mOMX->allocateBufferWithBackup(
                             mNode, portIndex, mem, &info.mBufferID);
@@ -812,6 +824,7 @@ ACodec::BufferInfo *ACodec::dequeueBufferFromNativeWindow() {
 #endif
     ANativeWindowBuffer *buf;
     int fenceFd = -1;
+
 #ifdef ACT_AUDIO
     totalBuffers = mBuffers[kPortIndexOutput].size();
     owned = 0;
@@ -826,12 +839,17 @@ ACodec::BufferInfo *ACodec::dequeueBufferFromNativeWindow() {
         return NULL;
     }
 #endif
+
     if (native_window_dequeue_buffer_and_wait(mNativeWindow.get(), &buf) != 0) {
         ALOGE("dequeueBuffer failed.");
         return NULL;
     }
 
+#ifdef ACT_AUDIO
+    for (i = totalBuffers; i-- > 0;) {
+#else
     for (size_t i = mBuffers[kPortIndexOutput].size(); i-- > 0;) {
+#endif
         BufferInfo *info =
             &mBuffers[kPortIndexOutput].editItemAt(i);
 
@@ -2440,15 +2458,13 @@ void ACodec::sendFormatChange(const sp<AMessage> &reply) {
                 }
 #ifdef ACT_AUDIO
             
-            if(!strcmp(mComponentName.c_str(), ACTIONS_VIDEO_DECODER)){                	
+            if(!strcmp(mComponentName.c_str(), ACTIONS_VIDEO_DECODER)) {                	
                 	notify->setRect(
                             "crop",
                             0, 0,
                             video_display_w - 1,
                             video_display_h - 1);
-                }
-                else
-                {
+                } else {
 #endif
 
                 CHECK_GE(rect.nLeft, 0);
@@ -2464,6 +2480,7 @@ void ACodec::sendFormatChange(const sp<AMessage> &reply) {
                         rect.nTop,
                         rect.nLeft + rect.nWidth - 1,
                         rect.nTop + rect.nHeight - 1);
+		}
 
                 if (mNativeWindow != NULL) {
                     reply->setRect(
@@ -3054,6 +3071,9 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
                 if (eos) {
                     flags |= OMX_BUFFERFLAG_EOS;
                 }
+#ifdef ACT_AUDIO
+                int32_t video_buffer_size = 0;
+#endif
 
                 if (buffer != info->mData) {
                     ALOGV("[%s] Needs to copy input data for buffer %p. (%p != %p)",
@@ -3061,10 +3081,75 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
                          bufferID,
                          buffer.get(), info->mData.get());
 
+#ifdef ACT_AUDIO
+#if 1
+            CHECK_LE(buffer->size(), info->mData->capacity());
+            if (!strncasecmp("OMX.google",mCodec->mComponentName.c_str(), 10)
+            ||!strcmp(ACTIONS_AUDIO_DECODER,mCodec->mComponentName.c_str())
+            ||mCodec->mpeg4_special_data_flag == 1) {
+                 if(mCodec->mpeg4_special_data_flag == 1) {
+	             ALOGD("this is mpeg4 special pkt");
+	             mCodec->mpeg4_special_data_flag = 0;
+	             unsigned char *Vir_addr=(unsigned char *)(info->mData->data());
+	             memcpy(Vir_addr, buffer->data(), buffer->size());
+                     	
+	                 *(unsigned int *)(Vir_addr + 0) = 0;
+	                 *(unsigned int *)(Vir_addr + 4) = 0;
+	                 *(unsigned int *)(Vir_addr + 8) = mCodec->video_display_w;
+	                 *(unsigned int *)(Vir_addr + 12) = mCodec->video_display_h;
+	                 *(unsigned int *)(Vir_addr + 16) = 0;
+	                 buffer->setRange(0,20);
+	                 ALOGD("Vir_addr %x ====width %d height %d",Vir_addr,*(unsigned int *)(Vir_addr + 8),*(unsigned int *)(Vir_addr + 12));
+	                 video_buffer_size = 20;
+	            } else {
+	                 memcpy(info->mData->data(), buffer->data(), buffer->size());
+	                   }
+                    	
+                    	ALOGV("ACodec buffer->data() %x, buffer->size() %d",buffer->data(), buffer->size());
+                    } else {
+//ALOGD("phy ------- info->mData->data() %x",info->mData->data());
+						
+//ALOGD("1ACodec buffer->data() %x, buffer->size() %d",buffer->data(), buffer->size());
+unsigned char *Vir_addr=(unsigned char *)(info->mData->data());
+		packet_header_t *packet_header = (packet_header_t *)Vir_addr;
+		packet_header->header_type = VIDEO_PACKET;
+		
+		packet_header->packet_ts = (int)(timeUs/1000);
+		packet_header->stream_end_flag = 0;
+		if(mCodec->mIsCodecNeedFlush==true) {
+			packet_header->seek_reset_flag = 1;
+			mCodec->mIsCodecNeedFlush=false;
+	ALOGV("decoder need flush \n");
+		} else {
+		        packet_header->seek_reset_flag = 0;
+			}
+		
+			if(mCodec->special_data_cpy_flag == 1) {
+				packet_header->block_len = buffer->size() + mCodec->special_data->size();
+				ALOGD("special_data %x special_data_len %d",mCodec->special_data->data(),mCodec->special_data->size());
+				memcpy((Vir_addr + sizeof(packet_header_t)), mCodec->special_data->data(),mCodec->special_data->size());
+				memcpy((Vir_addr + sizeof(packet_header_t) + mCodec->special_data->size()),buffer->data(), buffer->size());
+				
+				mCodec->special_data_cpy_flag = 0;
+				video_buffer_size = buffer->size() + sizeof(packet_header_t)+ mCodec->special_data->size();
+			} else {
+				packet_header->block_len = buffer->size();
+		                memcpy((Vir_addr + sizeof(packet_header_t)), buffer->data(), buffer->size());
+		                video_buffer_size = buffer->size() + sizeof(packet_header_t);
+		                }		            
+	                }
+#else
+			OMX_BUFFERHEADERTYPE *header = (OMX_BUFFERHEADERTYPE *) info->mBufferID;
+			header->pBuffer = (OMX_U8 *)buffer->data(); 						
+#endif
+                } else if(!strcmp(ACTIONS_VIDEO_DECODER,mCodec->mComponentName.c_str())) {
+								video_buffer_size=buffer->size();
+                }
+#else
                     CHECK_LE(buffer->size(), info->mData->capacity());
                     memcpy(info->mData->data(), buffer->data(), buffer->size());
                 }
-
+#endif
                 if (flags & OMX_BUFFERFLAG_CODECCONFIG) {
                     ALOGV("[%s] calling emptyBuffer %p w/ codec specific data",
                          mCodec->mComponentName.c_str(), bufferID);
@@ -3087,7 +3172,31 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
                 stats.mFillBufferDoneTimeUs = -1ll;
                 mCodec->mBufferStats.add(timeUs, stats);
 #endif
-
+#ifdef ACT_AUDIO
+                if (!strncasecmp("OMX.google",mCodec->mComponentName.c_str(), 10)
+                ||!strcmp(ACTIONS_AUDIO_DECODER,mCodec->mComponentName.c_str()))
+                {
+                	CHECK_EQ(mCodec->mOMX->emptyBuffer(
+	                            mCodec->mNode,
+	                            bufferID,
+	                            0,
+	                            buffer->size(),
+	                            flags,
+	                            timeUs),
+	                         (status_t)OK);
+                }
+                else
+                {
+	                CHECK_EQ(mCodec->mOMX->emptyBuffer(
+	                            mCodec->mNode,
+	                            bufferID,
+	                            0,
+	                            video_buffer_size,
+	                            flags,
+	                            timeUs),
+	                         (status_t)OK);
+               }
+#else
                 CHECK_EQ(mCodec->mOMX->emptyBuffer(
                             mCodec->mNode,
                             bufferID,
@@ -3096,6 +3205,7 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
                             flags,
                             timeUs),
                          (status_t)OK);
+#endif
 
                 info->mStatus = BufferInfo::OWNED_BY_COMPONENT;
 
@@ -3202,9 +3312,9 @@ bool ACodec::BaseState::onOMXFillBufferDone(
 
     BufferInfo *info =
         mCodec->findBufferByID(kPortIndexOutput, bufferID, &index);
-
+#ifndef ACT_AUDIO
     CHECK_EQ((int)info->mStatus, (int)BufferInfo::OWNED_BY_COMPONENT);
-
+#endif
     info->mStatus = BufferInfo::OWNED_BY_US;
 
     PortMode mode = getPortMode(kPortIndexOutput);
@@ -3316,8 +3426,14 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
                     info->mGraphicBuffer.get(), -1)) == OK) {
             info->mStatus = BufferInfo::OWNED_BY_NATIVE_WINDOW;
         } else {
+#ifdef ACT_AUDIO
+           // mCodec->signalError(OMX_ErrorUndefined, err);
+            info->mStatus = BufferInfo::OWNED_BY_US;
+            ALOGW("queueBuffer out err");
+#else
             mCodec->signalError(OMX_ErrorUndefined, err);
             info->mStatus = BufferInfo::OWNED_BY_US;
+#endif
         }
     } else {
         info->mStatus = BufferInfo::OWNED_BY_US;
@@ -3490,7 +3606,9 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
         }
     } else {
         CHECK(msg->findString("mime", &mime));
-
+#ifdef ACT_AUDIO
+	ALOGD("--mime %s",mime.c_str());
+#endif
         int32_t encoder;
         if (!msg->findInt32("encoder", &encoder)) {
             encoder = false;
@@ -3559,6 +3677,42 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
     }
 
     mCodec->changeState(mCodec->mLoadedState);
+#ifdef ACT_AUDIO
+    mCodec->special_data_cpy_flag = 0;
+    if(!strcmp("video/avc",mime.c_str()))
+    {
+        mCodec->special_data = new ABuffer(2048);
+        
+        mCodec->special_data->setRange(0,0);
+        mCodec->special_data_cpy_flag = 0;        
+	    
+	    for (size_t i = 0;; ++i) 
+	    {
+	        sp<ABuffer> csd;
+	        if (!msg->findBuffer(StringPrintf("csd-%d", i).c_str(), &csd)) {
+	            break;
+	        }
+	        ALOGD("----memcpy special_data addr:%x size:%d",csd->data(),csd->size());
+	        
+	        memcpy(mCodec->special_data->data() + mCodec->special_data->size(), csd->data(), csd->size());
+            mCodec->special_data->setRange(0, mCodec->special_data->size() + csd->size());
+            ALOGD("special_data->data() %x special_data->size() %d",mCodec->special_data->data(),mCodec->special_data->size());
+	    	mCodec->special_data_cpy_flag = 1;
+	    	
+	    	csd->meta()->setInt32("csd", false);
+	    	//csd.clear();
+	
+	    }
+	   
+    }
+    mCodec->mIsCodecNeedFlush = false;
+    mCodec->mpeg4_special_data_flag = 0;
+    if(!strcmp("video/mp4v-es",mime.c_str()))
+    {
+    	ALOGD("in video/mp4v-es");
+    	mCodec->mpeg4_special_data_flag = 1;
+    }
+#endif
 
     return true;
 }
@@ -3671,7 +3825,9 @@ bool ACodec::LoadedState::onConfigureComponent(
         mCodec->signalError(OMX_ErrorUndefined, err);
         return false;
     }
-
+#ifdef ACT_AUDIO
+ALOGD("--mCodec->mComponentName.c_str() %s",mCodec->mComponentName.c_str());
+#endif
     sp<RefBase> obj;
     if (msg->findObject("native-window", &obj)
             && strncmp("OMX.google.", mCodec->mComponentName.c_str(), 11)) {
@@ -3746,8 +3902,45 @@ void ACodec::LoadedToIdleState::stateEntered() {
              "(error 0x%08x)",
              err);
 
+#ifdef ACT_AUDIO
+#if 1
+		OMX_PARAM_PORTDEFINITIONTYPE def;
+		InitOMXParams(&def);
+		def.nPortIndex = kPortIndexOutput;
+			  status_t err = mCodec->mOMX->getParameter(
+				mCodec->mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
+	// Dequeue buffers and send them to OMX
+		for (OMX_U32 i = 0; i < def.nBufferCountActual; i++) {
+			ANativeWindowBuffer *buf;
+	//		  err = mNativeWindow->dequeueBuffer(mNativeWindow.get(), &buf);
+	//		  if (err != 0) {
+	//			  ALOGE("dequeueBuffer failed: %s (%d)", strerror(-err), -err);
+	//			  break;
+	//		  }
+			sp<GraphicBuffer> graphicBuffer(new GraphicBuffer());
+			BufferInfo info;
+			info.mStatus = BufferInfo::OWNED_BY_US;
+			info.mData = new ABuffer(0);
+			info.mGraphicBuffer = graphicBuffer;
+	//		  mBuffers[kPortIndexOutput].push(info);
+			IOMX::buffer_id bufferId;
+			err = mCodec->mOMX->useGraphicBuffer(mCodec->mNode, kPortIndexOutput, graphicBuffer,
+					&bufferId);
+			if (err != 0) {
+				ALOGE("registering GraphicBuffer %lu with OMX IL component failed: "
+					 "%d", i, err);
+				break;
+			}
+	//		  mBuffers[kPortIndexOutput].editItemAt(i).mBufferID = bufferId;
+	//		  ALOGD("[%s] Registered graphic buffer with ID %p (pointer = %p)",
+	//			   mComponentName.c_str(),
+	//			   bufferId, graphicBuffer.get());
+		}
+#endif
+        mCodec->signalError(OMX_ErrorallocateBuffersFailed, OMX_ErrorallocateBuffersFailed);
+#else
         mCodec->signalError(OMX_ErrorUndefined, err);
-
+#endif
         mCodec->changeState(mCodec->mLoadedState);
     }
 }
@@ -3987,6 +4180,11 @@ bool ACodec::ExecutingState::onMessageReceived(const sp<AMessage> &msg) {
 
             mCodec->changeState(mCodec->mFlushingState);
             handled = true;
+#ifdef ACT_AUDIO
+            if(!strcmp(mCodec->mComponentName.c_str(), ACTIONS_VIDEO_DECODER)){
+            	mCodec->mIsCodecNeedFlush = true;
+            }
+#endif
             break;
         }
 
@@ -4089,7 +4287,11 @@ bool ACodec::ExecutingState::onOMXEvent(
                             mCodec->mNode,
                             OMX_CommandPortDisable, kPortIndexOutput),
                          (status_t)OK);
-
+#ifdef ACT_AUDIO
+                if(!strcmp(mCodec->mComponentName.c_str(), ACTIONS_VIDEO_DECODER)){
+                   usleep(20000);
+                }
+#endif
                 mCodec->freeOutputBuffersNotOwnedByComponent();
 
                 mCodec->changeState(mCodec->mOutputPortSettingsChangedState);
