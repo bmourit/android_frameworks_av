@@ -167,6 +167,7 @@ enum {
 
     kKeyPssh              = 'pssh',  // raw data
     kKeyTunnelException   = 'Ntnl', // not tunnel
+
 #ifdef ACT_AUDIO
     // Actions' Media Extractor info structure
     kKeyActMediaInfo      = 'actm',  // pointer to media_info_t

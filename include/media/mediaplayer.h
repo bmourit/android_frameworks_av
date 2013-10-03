@@ -49,7 +49,7 @@ enum media_event_type {
 #ifdef ACT_AUDIO
     MEDIA_SUB               = 400,
     MEDIA_REDIRECT          = 500,
-    MEDIA_REDIRECT_NUPLAYER = 700,
+    MEDIA_REDIRECT_NUPLAYER = 600,
 #endif
 };
 

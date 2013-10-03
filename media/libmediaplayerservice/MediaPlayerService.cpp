@@ -1123,23 +1123,23 @@ void MediaPlayerService::Client::notify(
         memcpy(shmem->pointer(), (char *)packet, size);
         client->mClient->postData(msg, shmem);
      #endif
-    } else if(msg==MEDIA_REDIRECT){  
+ } else if(msg==MEDIA_REDIRECT){  
     	char * uri  = (char *)malloc(ext2);
     	if (uri != NULL) {
     		ALOGI("notify: malloc %d uri OK", ext2);
 	    	memset(uri, 0, ext2);
 	    	strncpy(uri, (char *)ext1, ext2);
-    	}else {
+    	} else {
     		ALOGE("notify: malloc new uri failed when redirect palyer");
     	}
     	
-		ALOGI("notify: New Url  len: %d uri: %s", ext2, uri); 			
+		ALOGI("notify: New Url  len: %d uri: %s", ext2, uri);
 		player_type playerType = MediaPlayerFactory::getPlayerType(client, uri);
 		if (client->mPlayer->playerType() == playerType) {
 			ALOGI("notify: processing redirect case and meet the same player type as before, and len: %d", ext2);
 			client->mClient->notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, ERROR_IO, obj);
 		}else { 	
-			client->setDataSource(uri, NULL);	
+			client->setDataSource(uri, NULL);
 			client->prepareAsync();
 		} 
 
@@ -1148,19 +1148,19 @@ void MediaPlayerService::Client::notify(
 			uri = NULL;
 			ALOGI("notify: free uri OK");
 		}
-	}else if (msg == MEDIA_REDIRECT_NUPLAYER) {
+	} else if (msg == MEDIA_REDIRECT_NUPLAYER) {
 		char * uri  = (char *)malloc(ext2);
 		if (uri != NULL) {
 			ALOGI("notify: malloc %d uri OK", ext2);
 			memset(uri, 0, ext2);
 			strncpy(uri, (char *)ext1, ext2);
-		}else {
+		} else {
 			ALOGE("notify: malloc new uri failed when redirect palyer");
 		}
     	
 		ALOGI("notify: New Url  len: %d uri: %s client->mPlayerType: %d", ext2, uri, client->mPlayerType); 	
 		client->mPlayerType = NU_PLAYER;
-		client->setDataSource(uri, NULL);	
+		client->setDataSource(uri, NULL);
 		client->prepareAsync();
 
 		if (uri) {
@@ -1168,7 +1168,7 @@ void MediaPlayerService::Client::notify(
 			uri = NULL;
 			ALOGI("notify: free uri OK");
 		}
-	}else{
+	} else {
 #endif
     if (MEDIA_INFO == msg &&
         MEDIA_INFO_METADATA_UPDATE == ext1) {
