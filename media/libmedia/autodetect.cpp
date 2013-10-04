@@ -850,17 +850,17 @@ static const CharRange kBig5Ranges[] = {
 };
 
 #ifdef ACT_AUDIO
-static const CharRange kGB2312Ranges[] = { 
+static const CharRange kGB2312Ranges[] = {
     //JAPANESE AND SO on
     { 0xA4A1, 0xA4F4 },
     { 0xA5A1, 0xA5F7 },
     { 0xA8C4, 0xA8EA },
-    //CHINESE 
-    { 0xB0A1, 0xB0FE },    
+    //CHINESE
+    { 0xB0A1, 0xB0FE },
     { 0xB1A1, 0xB1FE },
     { 0xB2A1, 0xB2FE },
     { 0xB3A1, 0xB3FE },
-    { 0xB4A1, 0xB4FE },    
+    { 0xB4A1, 0xB4FE },
     { 0xB5A1, 0xB5FE },
     { 0xB6A1, 0xB6FE },
     { 0xB7A1, 0xB7FE },
@@ -891,7 +891,7 @@ static const CharRange kGB2312Ranges[] = {
     { 0xD3A1, 0xD3FE },
     { 0xD4A1, 0xD4FE },
     { 0xD5A1, 0xD5FE },
-    { 0xD6A1, 0xD6FE },   
+    { 0xD6A1, 0xD6FE },
     { 0xD7A1, 0xD7FE },
     { 0xD8A1, 0xD8FE },
     { 0xD9A1, 0xD9FE },
@@ -924,7 +924,7 @@ static const CharRange kGB2312Ranges[] = {
     { 0xF4A1, 0xF4FE },
     { 0xF5A1, 0xF5FE },
     { 0xF6A1, 0xF6FE },
-    { 0xF7A1, 0xF7FE },    
+    { 0xF7A1, 0xF7FE },
 };
 #endif
 static bool charMatchesEncoding(int ch, const CharRange* encodingRanges, int rangeCount) {

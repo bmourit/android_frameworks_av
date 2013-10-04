@@ -1589,6 +1589,18 @@ M4OSA_ERR VideoEditor3gpReader_getNextStreamHandler(M4OSA_Context context,
                             DecoderSpecificInfo = M4OSA_NULL;
                         }
                     }
+#ifdef ACT_AUDIO
+		// actions codec
+                    else{
+                    	(*pStreamHandler)->m_pDecoderSpecificInfo = M4OSA_NULL;
+                        (*pStreamHandler)->m_decoderSpecificInfoSize = 0;
+                        (*pStreamHandler)->m_H264decoderSpecificInfoSize = 0;
+                        (*pStreamHandler)->m_pH264DecoderSpecificInfo =
+                            M4OSA_NULL;
+                        (*pStreamHandler)->m_pESDSInfo = M4OSA_NULL;
+                        (*pStreamHandler)->m_ESDSInfoSize = 0;
+                    } // end actions codec
+#endif
                     (*pStreamHandler)->m_pESDSInfo = M4OSA_NULL;
                     (*pStreamHandler)->m_ESDSInfoSize = 0;
 

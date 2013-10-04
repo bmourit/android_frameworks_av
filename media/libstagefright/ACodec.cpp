@@ -50,7 +50,7 @@
 
 #ifdef ACT_AUDIO
 #include <actal_posix_dev.h>
-#include<ALdec_plugin.h>
+#include <ALdec_plugin.h>
 #include "gralloc_priv.h"
 #include "ACT_OMX_Index.h"
 
@@ -505,7 +505,7 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
                         : OMXCodec::kRequiresAllocateBufferOnOutputPorts;
 
 #ifdef ACT_AUDIO
-                //if (portIndex == kPortIndexInput && (mFlags & kFlagIsSecure)) //merge zh
+                //if (portIndex == kPortIndexInput && (mFlags & kFlagIsSecure))
                 if (portIndex == kPortIndexInput && !mIsEncoder) {
                    if(mOMX->livesLocally(mNode, getpid())) {
 #else
@@ -582,17 +582,16 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
 
 #ifdef ACT_AUDIO
     err = mNativeWindow->query(mNativeWindow.get(),NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER,&result);
-	if(err){
-	  ALOGE("  mAnw->query  NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER = %d !",result);
-	}else{
+	if(err) {
+	  ALOGE ("  mAnw->query  NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER = %d !",result);
+	} else {
 		ALOGE(" NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER  = %d !",result);
 	}
 	
-	/* window SurfaceTextureClient */
 	err =mNativeWindow->query(mNativeWindow.get(), NATIVE_WINDOW_CONCRETE_TYPE, &result);
-	if(err){
+	if(err) {
 		ALOGE(" mAnw->query  NATIVE_WINDOW_CONCRETE_TYPE = %d !",result);
-	}else{
+	} else {
 		ALOGE(" NATIVE_WINDOW_CONCRETE_TYPE  = %d !",result);
 	}
 
@@ -601,8 +600,7 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
     if (err != OK) {
         return err;
     }
-    switch(def.format.video.eColorFormat)
-    {
+    switch(def.format.video.eColorFormat) {
     	case OMX_COLOR_FormatYUV420Planar:
 				grallocColorFormat =  HAL_PIXEL_FORMAT_ACT_NV12;
 				break;
@@ -619,7 +617,7 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
     err = native_window_set_buffers_geometry(
             mNativeWindow.get(),
             def.format.video.nStride,
-            (def.format.video.nFrameHeight+15)&(~15), //merge zh
+            (def.format.video.nFrameHeight+15)&(~15),
             def.format.video.eColorFormat);
 #else
 #ifdef USE_SAMSUNG_COLORFORMAT
@@ -834,7 +832,7 @@ ACodec::BufferInfo *ACodec::dequeueBufferFromNativeWindow() {
         }
     }
     if (owned >= 18) {
-        // stop request more video buffers if we already have enough
+        // don't request additional video buffers if we already have enough
         return NULL;
     }
 #endif
@@ -1131,7 +1129,8 @@ status_t ACodec::configureCodec(
             }
 
             err = setupAACCodec(
-                    encoder, numChannels, sampleRate, bitRate, aacProfile, isADTS != 0);
+                    encoder, numChannels, sampleRate, bitRate, aacProfile,
+                    isADTS != 0);
         }
     } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AMR_NB)) {
         err = setupAMRCodec(encoder, false /* isWAMR */, bitRate);
@@ -3098,10 +3097,8 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
                     CHECK_LE(buffer->size(), info->mData->capacity());
                     if (!strncasecmp("OMX.google",mCodec->mComponentName.c_str(), 10)
                     ||!strcmp(ACTIONS_AUDIO_DECODER,mCodec->mComponentName.c_str())
-                    ||mCodec->mpeg4_special_data_flag == 1)
-                    {
-                    	if(mCodec->mpeg4_special_data_flag == 1)
-	                    {
+                    ||mCodec->mpeg4_special_data_flag == 1) {
+                    	if(mCodec->mpeg4_special_data_flag == 1) {
 	                    	ALOGD("this is mpeg4 special pkt");
 	                    	mCodec->mpeg4_special_data_flag = 0;
 	                    	unsigned char *Vir_addr=(unsigned char *)(info->mData->data());
@@ -3115,57 +3112,46 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
 	                    	buffer->setRange(0,20);
 	                    	ALOGD("Vir_addr %x ====width %d height %d",Vir_addr,*(unsigned int *)(Vir_addr + 8),*(unsigned int *)(Vir_addr + 12));
 	                    	video_buffer_size = 20;
-	                    }
-	                    else
-	                    {
+	                    } else {
 	                    	memcpy(info->mData->data(), buffer->data(), buffer->size());
 	                    }
-                    	
+
                     	ALOGV("ACodec buffer->data() %x, buffer->size() %d",buffer->data(), buffer->size());
-                    }
-                    else
-                    {
+                    } else {
 //ALOGD("phy ------- info->mData->data() %x",info->mData->data());
-						
 //ALOGD("1ACodec buffer->data() %x, buffer->size() %d",buffer->data(), buffer->size());
-unsigned char *Vir_addr=(unsigned char *)(info->mData->data());
-						packet_header_t *packet_header = (packet_header_t *)Vir_addr;
-						packet_header->header_type = VIDEO_PACKET;
-						
-						packet_header->packet_ts = (int)(timeUs/1000);
-						packet_header->stream_end_flag = 0;
-						if(mCodec->mIsCodecNeedFlush==true){
-							packet_header->seek_reset_flag = 1;
-							mCodec->mIsCodecNeedFlush=false;
-              ALOGV("decoder need flush \n");
-						}else{
-							packet_header->seek_reset_flag = 0;
-						}
-						
-						if(mCodec->special_data_cpy_flag == 1)
-						{
-							packet_header->block_len = buffer->size() + mCodec->special_data->size();
-							ALOGD("special_data %x special_data_len %d",mCodec->special_data->data(),mCodec->special_data->size());
-							memcpy((Vir_addr + sizeof(packet_header_t)), mCodec->special_data->data(),mCodec->special_data->size());
-							memcpy((Vir_addr + sizeof(packet_header_t) + mCodec->special_data->size()),buffer->data(), buffer->size());
-							
-							mCodec->special_data_cpy_flag = 0;
-							video_buffer_size = buffer->size() + sizeof(packet_header_t)+ mCodec->special_data->size();
-						}
-						else
-						{
-							packet_header->block_len = buffer->size();
-		                    memcpy((Vir_addr + sizeof(packet_header_t)), buffer->data(), buffer->size());
-		                    video_buffer_size = buffer->size() + sizeof(packet_header_t);
-		                }		            
-	                }
+			unsigned char *Vir_addr=(unsigned char *)(info->mData->data());
+				packet_header_t *packet_header = (packet_header_t *)Vir_addr;
+				packet_header->header_type = VIDEO_PACKET;
+				packet_header->packet_ts = (int)(timeUs/1000);
+				packet_header->stream_end_flag = 0;
+			if(mCodec->mIsCodecNeedFlush==true) {
+				packet_header->seek_reset_flag = 1;
+				mCodec->mIsCodecNeedFlush=false;
+              			ALOGV("decoder need flush \n");
+			} else {
+				packet_header->seek_reset_flag = 0;
+			}
+			if(mCodec->special_data_cpy_flag == 1) {
+				packet_header->block_len = buffer->size() + mCodec->special_data->size();
+				ALOGD("special_data %x special_data_len %d",mCodec->special_data->data(),mCodec->special_data->size());
+				memcpy((Vir_addr + sizeof(packet_header_t)), mCodec->special_data->data(),mCodec->special_data->size());
+				memcpy((Vir_addr + sizeof(packet_header_t) + mCodec->special_data->size()),buffer->data(), buffer->size());
+				mCodec->special_data_cpy_flag = 0;
+				video_buffer_size = buffer->size() + sizeof(packet_header_t)+ mCodec->special_data->size();
+			} else {
+				packet_header->block_len = buffer->size();
+				memcpy((Vir_addr + sizeof(packet_header_t)), buffer->data(), buffer->size());
+				video_buffer_size = buffer->size() + sizeof(packet_header_t);
+			}
+		}
 
 #else
-					OMX_BUFFERHEADERTYPE *header = (OMX_BUFFERHEADERTYPE *) info->mBufferID;
-					header->pBuffer = (OMX_U8 *)buffer->data(); 						
+				OMX_BUFFERHEADERTYPE *header = (OMX_BUFFERHEADERTYPE *) info->mBufferID;
+				header->pBuffer = (OMX_U8 *)buffer->data();
 #endif
-                }else if(!strcmp(ACTIONS_VIDEO_DECODER,mCodec->mComponentName.c_str())){
-								video_buffer_size=buffer->size();
+                } else if(!strcmp(ACTIONS_VIDEO_DECODER,mCodec->mComponentName.c_str())) {
+				video_buffer_size=buffer->size();
                 }
 #else
                     CHECK_LE(buffer->size(), info->mData->capacity());
@@ -3450,7 +3436,7 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
             info->mStatus = BufferInfo::OWNED_BY_NATIVE_WINDOW;
         } else {
 #ifdef ACT_AUDIO
-           // mCodec->signalError(OMX_ErrorUndefined, err);
+            // mCodec->signalError(OMX_ErrorUndefined, err);
             info->mStatus = BufferInfo::OWNED_BY_US;
             ALOGW("queueBuffer out err");
 #else
@@ -3700,36 +3686,29 @@ ALOGD("--mime %s",mime.c_str());
     mCodec->changeState(mCodec->mLoadedState);
 #ifdef ACT_AUDIO
     mCodec->special_data_cpy_flag = 0;
-    if(!strcmp("video/avc",mime.c_str()))
-    {
+    if(!strcmp("video/avc",mime.c_str())) {
         mCodec->special_data = new ABuffer(2048);
-        
         mCodec->special_data->setRange(0,0);
-        mCodec->special_data_cpy_flag = 0;        
-	    
-	    for (size_t i = 0;; ++i) 
-	    {
+        mCodec->special_data_cpy_flag = 0;
+
+	    for (size_t i = 0;; ++i) {
 	        sp<ABuffer> csd;
 	        if (!msg->findBuffer(StringPrintf("csd-%d", i).c_str(), &csd)) {
 	            break;
-	        }
-	        ALOGD("----memcpy special_data addr:%x size:%d",csd->data(),csd->size());
-	        
-	        memcpy(mCodec->special_data->data() + mCodec->special_data->size(), csd->data(), csd->size());
+	    }
+
+	    ALOGD("----memcpy special_data addr:%x size:%d",csd->data(),csd->size());
+	    memcpy(mCodec->special_data->data() + mCodec->special_data->size(), csd->data(), csd->size());
             mCodec->special_data->setRange(0, mCodec->special_data->size() + csd->size());
             ALOGD("special_data->data() %x special_data->size() %d",mCodec->special_data->data(),mCodec->special_data->size());
 	    	mCodec->special_data_cpy_flag = 1;
-	    	
 	    	csd->meta()->setInt32("csd", false);
 	    	//csd.clear();
-	
 	    }
-	   
     }
     mCodec->mIsCodecNeedFlush = false;
     mCodec->mpeg4_special_data_flag = 0;
-    if(!strcmp("video/mp4v-es",mime.c_str()))
-    {
+    if(!strcmp("video/mp4v-es",mime.c_str())) {
     	ALOGD("in video/mp4v-es");
     	mCodec->mpeg4_special_data_flag = 1;
     }
@@ -4191,7 +4170,7 @@ bool ACodec::ExecutingState::onMessageReceived(const sp<AMessage> &msg) {
             mCodec->changeState(mCodec->mFlushingState);
             handled = true;
 #ifdef ACT_AUDIO
-            if(!strcmp(mCodec->mComponentName.c_str(), ACTIONS_VIDEO_DECODER)){
+            if(!strcmp(mCodec->mComponentName.c_str(), ACTIONS_VIDEO_DECODER)) {
             	mCodec->mIsCodecNeedFlush = true;
             }
 #endif

@@ -1167,7 +1167,7 @@ void MediaPlayerService::Client::notify(
 			free(uri);
 			uri = NULL;
 			ALOGI("notify: free uri OK");
-		}
+		        }
 	} else {
 #endif
     if (MEDIA_INFO == msg &&

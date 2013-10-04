@@ -41,7 +41,7 @@ ElementaryStreamQueue::ElementaryStreamQueue(Mode mode, uint32_t flags)
     : mMode(mode),
       mFlags(flags) {
 #ifdef ACT_AUDIO
-	  init_buf = (int8_t *)actal_malloc(12);
+    init_buf = (int8_t *)actal_malloc(12);
 #endif
 }
 
@@ -60,12 +60,11 @@ void ElementaryStreamQueue::clear(bool clearFormat) {
         mFormat.clear();
     }
 #ifdef ACT_AUDIO
-    if(init_buf != NULL)
-    {
+    if(init_buf != NULL) {
 	    actal_free(init_buf);
-	    //fixme:when use actaudio,init_buf should not be here
+	    //**FIXME** When using actaudio, 'init_buf' should not be here
 	    init_buf = NULL;
-	}
+    }
 #endif
 }
 
@@ -645,9 +644,9 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitH264() {
             int64_t timeUs = fetchTimestamp(nextScan);
             CHECK_GE(timeUs, 0ll);
 #ifdef ACT_AUDIO
-			if(timeUs == 0ll) {
-				ALOGD("tsv %lld",timeUs);
-			}
+	        if(timeUs == 0ll) {
+		    ALOGD("tsv %lld",timeUs);
+		}
 #endif
             accessUnit->meta()->setInt64("timeUs", timeUs);
 

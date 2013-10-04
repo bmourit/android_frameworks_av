@@ -52,10 +52,11 @@ LOCAL_C_INCLUDES :=                                                 \
     $(TOP)/frameworks/av/media/libstagefright/wifi-display          \
     $(TOP)/frameworks/native/include/media/openmax                  \
     $(TOP)/external/tremolo/Tremolo                                 \
+
 ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
 LOCAL_C_INCLUDES += \
     $(TOP)/frameworks/av/include/alsp/inc \
-    $(TOP)/frameworks/av/include/alsp/inc/common \
+    $(TOP)/frameworks/av/include/alsp/inc/common
 endif
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
