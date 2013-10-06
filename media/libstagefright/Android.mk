@@ -83,7 +83,7 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/native/include/media/openmax \
         $(TOP)/external/flac/include \
         $(TOP)/external/tremolo \
-        $(TOP)/external/openssl/include
+        $(TOP)/external/openssl/include \
 
 ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
 LOCAL_C_INCLUDES += \
@@ -92,7 +92,7 @@ LOCAL_C_INCLUDES += \
         $(TOP)/frameworks/av/include/alsp/inc \
         $(TOP)/hardware/libhardware/include/hardware \
         $(TOP)/frameworks/av/media/libstagefright/vendor/mmminfo \
-        $(TOP)/frameworks/av/include/alsp/inc/common
+        $(TOP)/frameworks/av/include/alsp/inc/common \
 endif
 
 ifneq ($(TI_CUSTOM_DOMX_PATH),)
@@ -177,11 +177,12 @@ LOCAL_STATIC_LIBRARIES := \
 ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
 LOCAL_STATIC_LIBRARIES += \
         libmmminfo \
-        libid3parser
+        libid3parser \
 endif
 
 LOCAL_SRC_FILES += \
         chromium_http_stub.cpp
+
 LOCAL_CPPFLAGS += -DCHROMIUM_AVAILABLE=1
 
 LOCAL_SHARED_LIBRARIES += libstlport
@@ -194,7 +195,8 @@ LOCAL_SHARED_LIBRARIES += \
         libdl
 
 ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-LOCAL_SHARED_LIBRARIES += libalc
+LOCAL_SHARED_LIBRARIES += \
+        libalc \
 endif
 
 LOCAL_CFLAGS += -Wno-multichar
@@ -205,12 +207,9 @@ endif
 
 ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT), true)
 LOCAL_CFLAGS += -DUSE_SAMSUNG_COLORFORMAT
-
-# Include native color format header path
 LOCAL_C_INCLUDES += \
 	$(TOP)/hardware/samsung/exynos4/hal/include \
 	$(TOP)/hardware/samsung/exynos4/include
-
 endif
 
 ifeq ($(BOARD_USE_TI_DUCATI_H264_PROFILE), true)
@@ -233,7 +232,7 @@ ifeq ($(TARGET_ENABLE_QC_AV_ENHANCEMENTS),true)
         LOCAL_C_INCLUDES += \
             $(TOP)/hardware/qcom/media/mm-core/inc
     endif
-endif #TARGET_ENABLE_QC_AV_ENHANCEMENTS
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
