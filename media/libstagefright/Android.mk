@@ -66,6 +66,17 @@ LOCAL_SRC_FILES:=                         \
         ExtendedExtractor.cpp             \
         QCUtils.cpp                       \
 
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+LOCAL_SRC_FILES += \
+        ActAudioExtractor.cpp             \
+        ActDataSource.cpp                 \
+        ActAudioDownMix.cpp               \
+        ActAudioDecoder.cpp               \
+        ActAudioEncoder.cpp               \
+        ActAudioWriter.cpp                \
+        ActVideoExtractor.cpp             \
+endif
+
 LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/av/include/media/stagefright/timedtext \
         $(TOP)/frameworks/native/include/media/hardware \
@@ -76,8 +87,12 @@ LOCAL_C_INCLUDES:= \
 
 ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
 LOCAL_C_INCLUDES += \
+        $(call include-path-for, alsp) \
+        $(TOP)/frameworks/av/media/libstagefright/vendor/al_libc \
         $(TOP)/frameworks/av/include/alsp/inc \
-        $(TOP)/hardware/act/gs702a/include
+        $(TOP)/hardware/libhardware/include/hardware \
+        $(TOP)/frameworks/av/media/libstagefright/vendor/mmminfo \
+        $(TOP)/frameworks/av/include/alsp/inc/common
 endif
 
 ifneq ($(TI_CUSTOM_DOMX_PATH),)
@@ -159,6 +174,12 @@ LOCAL_STATIC_LIBRARIES := \
         libstagefright_id3 \
         libFLAC \
 
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+LOCAL_STATIC_LIBRARIES += \
+        libmmminfo \
+        libid3parser
+endif
+
 LOCAL_SRC_FILES += \
         chromium_http_stub.cpp
 LOCAL_CPPFLAGS += -DCHROMIUM_AVAILABLE=1
@@ -172,7 +193,15 @@ LOCAL_SHARED_LIBRARIES += \
         libstagefright_foundation \
         libdl
 
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+LOCAL_SHARED_LIBRARIES += libalc
+endif
+
 LOCAL_CFLAGS += -Wno-multichar
+
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+LOCAL_CFLAGS += -DTURN_ON_MIDDLEWARE_FLAG
+endif
 
 ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT), true)
 LOCAL_CFLAGS += -DUSE_SAMSUNG_COLORFORMAT
