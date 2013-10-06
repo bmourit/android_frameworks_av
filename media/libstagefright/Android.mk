@@ -74,6 +74,12 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/external/tremolo \
         $(TOP)/external/openssl/include
 
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+LOCAL_C_INCLUDES += \
+        $(TOP)/frameworks/av/include/alsp/inc \
+        $(TOP)/hardware/act/gs702a/include
+endif
+
 ifneq ($(TI_CUSTOM_DOMX_PATH),)
 LOCAL_C_INCLUDES += $(TI_CUSTOM_DOMX_PATH)/omx_core/inc
 LOCAL_CPPFLAGS += -DUSE_TI_CUSTOM_DOMX

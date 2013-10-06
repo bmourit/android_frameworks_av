@@ -232,7 +232,7 @@ private:
 
     bool mPaused;
 
-#ifeq ACT_AUDIO
+#ifdef ACT_AUDIO
 	int32_t mIsStreamingFlag;
 	int64_t mKBufferFilledEventTimeOutNs;
 	int IS_THUMBNAIL;

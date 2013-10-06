@@ -142,6 +142,9 @@ private:
     status_t startRawAudioRecording();
     status_t startRTPRecording();
     status_t startMPEG2TSRecording();
+#ifdef ACT_AUDIO
+    status_t startActAudioRecording();
+#endif
     sp<MediaSource> createAudioSource();
     status_t checkVideoEncoderCapabilities();
     status_t checkAudioEncoderCapabilities();

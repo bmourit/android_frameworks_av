@@ -504,7 +504,7 @@ MediaPlayerService::Client::Client(
         int32_t connId, const sp<IMediaPlayerClient>& client,
         int audioSessionId, uid_t uid)
 {
-    ALOGV("Client(%d) constructor", connId);
+    ALOGW("Client(%d) constructor", connId);
     mPid = pid;
     mConnId = connId;
     mService = service;
@@ -514,6 +514,9 @@ MediaPlayerService::Client::Client(
     mAudioSessionId = audioSessionId;
     mUID = uid;
     mRetransmitEndpointValid = false;
+#ifdef ACT_AUDIO
+	mPlayerType = STAGEFRIGHT_PLAYER;
+#endif
 
 #if CALLBACK_ANTAGONIZER
     ALOGD("create Antagonizer");
@@ -539,8 +542,13 @@ void MediaPlayerService::Client::disconnect()
     {
         Mutex::Autolock l(mLock);
         p = mPlayer;
+#ifdef ACT_AUDIO
+        mClient.clear();
+    }
+#else
     }
     mClient.clear();
+#endif
 
     mPlayer.clear();
 
@@ -654,6 +662,12 @@ status_t MediaPlayerService::Client::setDataSource(
         return mStatus;
     } else {
         player_type playerType = MediaPlayerFactory::getPlayerType(this, url);
+#ifdef ACT_AUDIO
+        // create the right type of player
+		if (playerType != NU_PLAYER) {
+			playerType = (mPlayerType == NU_PLAYER) ? NU_PLAYER : playerType;
+		}
+#endif
         sp<MediaPlayerBase> p = setDataSource_pre(playerType);
         if (p == NULL) {
             return NO_INIT;
@@ -749,7 +763,16 @@ status_t MediaPlayerService::Client::setVideoSurfaceTexture(
         anw = new Surface(bufferProducer);
         status_t err = native_window_api_connect(anw.get(),
                 NATIVE_WINDOW_API_MEDIA);
-
+#ifdef ACT_AUDIO
+	 if (err != OK) {
+            // Mediaplayer BufferQueue
+            // disconnect awsomeplayer BufferQueue.
+		ALOGW("setVideoSurfaceTexture failed 1, retrying");
+		usleep(1*1000*1000);
+		err = native_window_api_connect(anw.get(),
+                NATIVE_WINDOW_API_MEDIA);
+	}
+#endif
         if (err != OK) {
             ALOGE("setVideoSurfaceTexture failed: %d", err);
             // Note that we must do the reset before disconnecting from the ANW.
@@ -1863,7 +1886,13 @@ void MediaPlayerService::AudioOutput::CallbackWrapper(
         return;
     }
 #endif
+#ifdef ACT_AUDIO
+    if (event != AudioTrack::EVENT_MORE_DATA) {
+        return;
+    }
+#else
     if (event == AudioTrack::EVENT_MORE_DATA) {
+#endif
     CallbackData *data = (CallbackData*)cookie;
     data->lock();
     AudioOutput *me = data->getOutput();
@@ -1890,9 +1919,10 @@ void MediaPlayerService::AudioOutput::CallbackWrapper(
     buffer->size = actualSize;
     data->unlock();
     }
-
+#ifndef ACT_AUDIO
     return;
 }
+#endif
 
 int MediaPlayerService::AudioOutput::getSessionId() const
 {
