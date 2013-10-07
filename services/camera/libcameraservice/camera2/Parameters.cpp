@@ -701,15 +701,15 @@ status_t Parameters::initialize(const CameraMetadata *info) {
 
     autoExposureLock = false;
     params.set(CameraParameters::KEY_AUTO_EXPOSURE_LOCK,
-            CameraParameters::FALSE);
+            CameraParameters::FFALSE);
     params.set(CameraParameters::KEY_AUTO_EXPOSURE_LOCK_SUPPORTED,
-            CameraParameters::TRUE);
+            CameraParameters::TTRUE);
 
     autoWhiteBalanceLock = false;
     params.set(CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK,
-            CameraParameters::FALSE);
+            CameraParameters::FFALSE);
     params.set(CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK_SUPPORTED,
-            CameraParameters::TRUE);
+            CameraParameters::TTRUE);
 
     meteringAreas.add(Parameters::Area(0, 0, 0, 0, 0));
     params.set(CameraParameters::KEY_MAX_NUM_METERING_AREAS,
@@ -741,9 +741,9 @@ status_t Parameters::initialize(const CameraMetadata *info) {
     }
 
     params.set(CameraParameters::KEY_ZOOM_SUPPORTED,
-            CameraParameters::TRUE);
+            CameraParameters::TTRUE);
     params.set(CameraParameters::KEY_SMOOTH_ZOOM_SUPPORTED,
-            CameraParameters::FALSE);
+            CameraParameters::FFALSE);
 
     params.set(CameraParameters::KEY_FOCUS_DISTANCES,
             "Infinity,Infinity,Infinity");
@@ -758,14 +758,14 @@ status_t Parameters::initialize(const CameraMetadata *info) {
 
     recordingHint = false;
     params.set(CameraParameters::KEY_RECORDING_HINT,
-            CameraParameters::FALSE);
+            CameraParameters::FFALSE);
 
     params.set(CameraParameters::KEY_VIDEO_SNAPSHOT_SUPPORTED,
-            CameraParameters::TRUE);
+            CameraParameters::TTRUE);
 
     videoStabilization = false;
     params.set(CameraParameters::KEY_VIDEO_STABILIZATION,
-            CameraParameters::FALSE);
+            CameraParameters::FFALSE);
 
     camera_metadata_ro_entry_t availableVideoStabilizationModes =
         staticInfo(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES);
@@ -773,10 +773,10 @@ status_t Parameters::initialize(const CameraMetadata *info) {
 
     if (availableVideoStabilizationModes.count > 1) {
         params.set(CameraParameters::KEY_VIDEO_STABILIZATION_SUPPORTED,
-                CameraParameters::TRUE);
+                CameraParameters::TTRUE);
     } else {
         params.set(CameraParameters::KEY_VIDEO_STABILIZATION_SUPPORTED,
-                CameraParameters::FALSE);
+                CameraParameters::FFALSE);
     }
 
     // Set up initial state for non-Camera.Parameters state variables
@@ -2285,7 +2285,7 @@ status_t Parameters::validateAreas(const Vector<Parameters::Area> &areas,
 
 bool Parameters::boolFromString(const char *boolStr) {
     return !boolStr ? false :
-        !strcmp(boolStr, CameraParameters::TRUE) ? true :
+        !strcmp(boolStr, CameraParameters::TTRUE) ? true :
         false;
 }
 

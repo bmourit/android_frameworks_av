@@ -728,8 +728,8 @@ public:
     static const char KEY_VIDEO_STABILIZATION_SUPPORTED[];
 
     // Value for KEY_ZOOM_SUPPORTED or KEY_SMOOTH_ZOOM_SUPPORTED
-    static const char TRUE[];
-    static const char FALSE[];
+    static const char TTRUE[];
+    static const char FFALSE[];
 
     // Value for KEY_FOCUS_DISTANCES
     static const char FOCUS_DISTANCE_INFINITY[];

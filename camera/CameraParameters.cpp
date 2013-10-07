@@ -256,8 +256,8 @@ const char CameraParameters::OBJECT_TRACKING_ON[] = "object-tracking";
 const char CameraParameters::OBJECT_TRACKING_OFF[] = "object-tracking";
 #endif
 
-const char CameraParameters::TRUE[] = "true";
-const char CameraParameters::FALSE[] = "false";
+const char CameraParameters::TTRUE[] = "true";
+const char CameraParameters::FFALSE[] = "false";
 const char CameraParameters::FOCUS_DISTANCE_INFINITY[] = "Infinity";
 
 // Values for white balance settings.
