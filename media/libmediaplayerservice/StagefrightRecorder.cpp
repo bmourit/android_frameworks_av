@@ -1279,7 +1279,7 @@ status_t StagefrightRecorder::startActAudioRecording() {
     mWriter->setListener(mListener);
     return mWriter->start();
 }
-@endif
+#endif
 void StagefrightRecorder::clipVideoFrameRate() {
     ALOGV("clipVideoFrameRate: encoder %d", mVideoEncoder);
     int minFrameRate = mEncoderProfiles->getVideoEncoderParamByName(
