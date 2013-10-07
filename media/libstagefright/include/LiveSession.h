@@ -46,15 +46,26 @@ struct LiveSession : public AHandler {
             const KeyedVector<String8, String8> *headers = NULL);
 
     void disconnect();
-
+#ifdef ACT_AUDIO
+    void retry(int);
     // Blocks until seek is complete.
     void seekTo(int64_t timeUs);
 
     status_t getDuration(int64_t *durationUs) const;
+	status_t getSeekedListTimeBase(int64_t *seekedListTimeBase);
+	status_t getMaxSegDuration(int64_t *maxSegDuration);
+#else
+    // Blocks until seek is complete.
+    void seekTo(int64_t timeUs);
+
+    status_t getDuration(int64_t *durationUs) const;
+#endif
 
     bool isSeekable() const;
     bool hasDynamicDuration() const;
-
+#ifdef ACT_AUDIO
+    void flushSourceQueueBuffers();
+#endif
     // Posted notification's "what" field will carry one of the following:
     enum {
         kWhatPrepared,
@@ -68,7 +79,11 @@ protected:
 
 private:
     enum {
+#ifdef ACT_AUDIO
+        kMaxNumQueuedFragments = 16, //old: 3 new: 16
+#else
         kMaxNumQueuedFragments = 3,
+#endif
         kMaxNumRetries         = 5,
     };
 
@@ -105,6 +120,9 @@ private:
     ssize_t mPrevBandwidthIndex;
     int64_t mLastPlaylistFetchTimeUs;
     sp<M3UParser> mPlaylist;
+#ifdef ACT_AUDIO
+    sp<M3UParser> mMainPlaylist;
+#endif
     int32_t mSeqNumber;
     int64_t mSeekTimeUs;
     int32_t mNumRetries;
@@ -116,9 +134,17 @@ private:
     bool mDurationFixed;  // Duration has been determined once and for all.
     bool mSeekDone;
     bool mDisconnectPending;
+#ifdef ACT_AUDIO
+    bool m_retrying;
+    int32_t seeking_count;
 
     int32_t mMonitorQueueGeneration;
+    int64_t mSeekedListTimeBase;
+    int64_t mMaxSegDuration;
+#else
 
+    int32_t mMonitorQueueGeneration;
+#endif
     enum RefreshState {
         INITIAL_MINIMUM_RELOAD_DELAY,
         FIRST_UNCHANGED_RELOAD_ATTEMPT,
@@ -138,7 +164,9 @@ private:
     status_t fetchFile(
             const char *url, sp<ABuffer> *out,
             int64_t range_offset = 0, int64_t range_length = -1);
-
+#ifdef ACT_AUDIO
+    status_t fetchFile2(sp<DataSource> source, int offset, sp<ABuffer> *out);
+#endif
     sp<M3UParser> fetchPlaylist(const char *url, bool *unchanged);
     size_t getBandwidthIndex();
 

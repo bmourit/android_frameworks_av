@@ -127,7 +127,12 @@ struct MyHandler : public AHandler {
           mKeepAliveTimeoutUs(kDefaultKeepAliveTimeoutUs),
           mKeepAliveGeneration(0),
           mPausing(false),
+#ifdef ACT_AUDIO
+	  mPauseGeneration(0),
+          mPlayResponseParsed(false) {
+#else
           mPauseGeneration(0) {
+#endif
         mNetLooper->setName("rtsp net");
         mNetLooper->start(false /* runOnCallingThread */,
                           false /* canCallJava */,
@@ -1523,6 +1528,9 @@ private:
     int32_t mPauseGeneration;
 
     Vector<TrackInfo> mTracks;
+#ifdef ACT_AUDIO
+    bool mPlayResponseParsed;
+#endif
 
     void setupTrack(size_t index) {
         sp<APacketSource> source =
@@ -1727,6 +1735,15 @@ private:
     void onAccessUnitComplete(
             int32_t trackIndex, const sp<ABuffer> &accessUnit) {
         ALOGV("onAccessUnitComplete track %d", trackIndex);
+
+#ifdef ACT_AUDIO
+        if(!mPlayResponseParsed){
+            ALOGI("play response is not parsed, storing accessunit");
+            TrackInfo *track = &mTracks.editItemAt(trackIndex);
+            track->mPackets.push_back(accessUnit);
+            return;
+        }
+#endif
 
         if (mFirstAccessUnit) {
             sp<AMessage> msg = mNotify->dup();

@@ -321,6 +321,10 @@ status_t CameraSource::configureCamera(
     getSupportedVideoSizes(*params, &isSetVideoSizeSupportedByCamera, sizes);
     bool isCameraParamChanged = false;
     if (width != -1 && height != -1) {
+#ifdef ACT_AUDIO
+    	#if 0
+    	if(mIsMetaDataStoredInVideoBuffers == false){
+
         if (!isVideoSizeSupported(width, height, sizes)) {
             ALOGE("Video dimension (%dx%d) is unsupported", width, height);
             return BAD_VALUE;
@@ -331,6 +335,32 @@ status_t CameraSource::configureCamera(
             params->setPreviewSize(width, height);
         }
         isCameraParamChanged = true;
+    	} else 
+    	#endif
+    	       {
+    		//should use max preview size? fixed later
+    		if (isVideoSizeSupported(width, height, sizes)) {
+    			if (isSetVideoSizeSupportedByCamera) {
+				params->setVideoSize(width, height);
+			} else {
+				params->setPreviewSize(width, height);
+			}
+			isCameraParamChanged = true;
+    		 }
+    	}
+#else
+        if (!isVideoSizeSupported(width, height, sizes)) {
+            ALOGE("Video dimension (%dx%d) is unsupported", width, height);
+            return BAD_VALUE;
+        }
+        if (isSetVideoSizeSupportedByCamera) {
+            params->setVideoSize(width, height);
+        } else {
+            params->setPreviewSize(width, height);
+        }
+        isCameraParamChanged = true;
+#endif
+
     } else if ((width == -1 && height != -1) ||
                (width != -1 && height == -1)) {
         // If one and only one of the width and height is -1
@@ -418,6 +448,30 @@ status_t CameraSource::checkVideoSize(
     // Check the actual video frame size against the target/requested
     // video frame size.
     if (width != -1 && height != -1) {
+#ifdef ACT_AUDIO
+    	#if 1
+    	if(mIsMetaDataStoredInVideoBuffers == false) {
+            if (frameWidthActual > width || frameHeightActual > height) {
+            ALOGE("Failed to set video frame size to %dx%d. "
+                    "The actual video size is %dx%d ", width, height,
+                    frameWidthActual, frameHeightActual);
+                return UNKNOWN_ERROR;
+            }
+    	}
+    	#endif
+    }
+    // Good now.
+    #if 0
+    if(mIsMetaDataStoredInVideoBuffers == false) {
+    mVideoSize.width = frameWidthActual;
+    mVideoSize.height = frameHeightActual;
+    } else 
+    	#endif
+    {
+    	mVideoSize.width = width;
+    	mVideoSize.height = height;
+    }
+#else
         if (frameWidthActual != width || frameHeightActual != height) {
             ALOGE("Failed to set video frame size to %dx%d. "
                     "The actual video size is %dx%d ", width, height,
@@ -429,6 +483,7 @@ status_t CameraSource::checkVideoSize(
     // Good now.
     mVideoSize.width = frameWidthActual;
     mVideoSize.height = frameHeightActual;
+#endif
     return OK;
 }
 
@@ -527,11 +582,24 @@ status_t CameraSource::initWithCameraAccess(
         return err;
     }
 
+#ifdef ACT_AUDIO
+    // By default, do not store metadata in video buffers
+	mIsMetaDataStoredInVideoBuffers = false;
+	mCamera->storeMetaDataInBuffers(false);
+	if (storeMetaDataInVideoBuffers) {
+		if (OK == mCamera->storeMetaDataInBuffers(true)) {
+			mIsMetaDataStoredInVideoBuffers = true;
+		}
+	}
+#endif
     // Set the camera to use the requested video frame size
     // and/or frame rate.
     if ((err = configureCamera(&params,
                     videoSize.width, videoSize.height,
                     frameRate))) {
+#ifdef ACT_AUDIO
+    	mIsMetaDataStoredInVideoBuffers = false;
+#endif
         return err;
     }
 
@@ -539,8 +607,14 @@ status_t CameraSource::initWithCameraAccess(
     CameraParameters newCameraParams(mCamera->getParameters());
     if ((err = checkVideoSize(newCameraParams,
                 videoSize.width, videoSize.height)) != OK) {
+#ifdef ACT_AUDIO
+    	mIsMetaDataStoredInVideoBuffers = false;
+#endif
         return err;
     }
+#ifdef ACT_AUDIO
+    mIsMetaDataStoredInVideoBuffers = false;
+#endif
     if ((err = checkFrameRate(newCameraParams, frameRate)) != OK) {
         return err;
     }
@@ -577,9 +651,20 @@ status_t CameraSource::initWithCameraAccess(
     mMeta->setInt32(kKeyStride,      mVideoSize.width);
     mMeta->setInt32(kKeySliceHeight, mVideoSize.height);
     mMeta->setInt32(kKeyFrameRate,   mVideoFrameRate);
-
+#ifdef ACT_AUDIO
+    int frameWidthActual = 0;
+    int frameHeightActual = 0;
+    if(mIsMetaDataStoredInVideoBuffers == true){
+    	CameraParameters newCameraParams_ext(mCamera->getParameters());
+    	//newCameraParams_ext.getPreviewSize(&frameWidthActual, &frameHeightActual);
+    	frameWidthActual = newCameraParams_ext.getInt("record-video-width");
+    	frameHeightActual = newCameraParams_ext.getInt("record-video-height");
+    	mMeta->setInt32('pwdt', frameWidthActual);
+    	mMeta->setInt32('phgt', frameHeightActual);
+    }
+    ALOGE("preview width source %d",frameWidthActual);
+#endif
     QCUtils::HFR::setHFRIfEnabled(params, mMeta);
-
     return OK;
 }
 

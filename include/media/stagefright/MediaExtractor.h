@@ -34,7 +34,7 @@ class MediaExtractor : public RefBase {
 public:
     static sp<MediaExtractor> Create(
 #ifdef ACT_AUDIO
-	    const sp<DataSource> &source, const char *mime = NULL,void* cookie=NULL);
+	    const sp<DataSource> &source, const char *mime = NULL, void* cookie=NULL);
 #else
             const sp<DataSource> &source, const char *mime = NULL);
 #endif

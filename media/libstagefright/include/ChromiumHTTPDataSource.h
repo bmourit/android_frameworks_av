@@ -48,7 +48,9 @@ struct ChromiumHTTPDataSource : public HTTPBase {
     virtual void getDrmInfo(sp<DecryptHandle> &handle, DrmManagerClient **client);
 
     virtual String8 getUri();
-
+#ifdef ACT_AUDIO
+    virtual void setUri(AString url);
+#endif
     virtual String8 getMIMEType() const;
 
     virtual status_t reconnectAtOffset(off64_t offset);

@@ -7,6 +7,10 @@ ifeq ($(BOARD_HTC_3D_SUPPORT),true)
    LOCAL_CFLAGS += -DHTC_3D_SUPPORT
 endif
 
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+    LOCAL_CFLAGS += -DACT_AUDIO
+endif
+
 LOCAL_SRC_FILES:=                         \
         ACodec.cpp                        \
         AACExtractor.cpp                  \
@@ -66,17 +70,6 @@ LOCAL_SRC_FILES:=                         \
         ExtendedExtractor.cpp             \
         QCUtils.cpp                       \
 
-ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-LOCAL_SRC_FILES += \
-        ActAudioExtractor.cpp             \
-        ActDataSource.cpp                 \
-        ActAudioDownMix.cpp               \
-        ActAudioDecoder.cpp               \
-        ActAudioEncoder.cpp               \
-        ActAudioWriter.cpp                \
-        ActVideoExtractor.cpp             \
-endif
-
 LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/av/include/media/stagefright/timedtext \
         $(TOP)/frameworks/native/include/media/hardware \
@@ -84,16 +77,6 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/external/flac/include \
         $(TOP)/external/tremolo \
         $(TOP)/external/openssl/include \
-
-ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-LOCAL_C_INCLUDES += \
-        $(call include-path-for, alsp) \
-        $(TOP)/frameworks/av/media/libstagefright/vendor/al_libc \
-        $(TOP)/frameworks/av/include/alsp/inc \
-        $(TOP)/hardware/libhardware/include/hardware \
-        $(TOP)/frameworks/av/media/libstagefright/vendor/mmminfo \
-        $(TOP)/frameworks/av/include/alsp/inc/common \
-endif
 
 ifneq ($(TI_CUSTOM_DOMX_PATH),)
 LOCAL_C_INCLUDES += $(TI_CUSTOM_DOMX_PATH)/omx_core/inc
@@ -174,12 +157,6 @@ LOCAL_STATIC_LIBRARIES := \
         libstagefright_id3 \
         libFLAC \
 
-ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-LOCAL_STATIC_LIBRARIES += \
-        libmmminfo \
-        libid3parser \
-endif
-
 LOCAL_SRC_FILES += \
         chromium_http_stub.cpp
 
@@ -192,20 +169,11 @@ LOCAL_SHARED_LIBRARIES += \
         libstagefright_enc_common \
         libstagefright_avc_common \
         libstagefright_foundation \
-        libdl
-
-ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-LOCAL_SHARED_LIBRARIES += \
-        libalc \
-endif
+        libdl \
 
 LOCAL_CFLAGS += -Wno-multichar
 
-ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-LOCAL_CFLAGS += -DTURN_ON_MIDDLEWARE_FLAG
-endif
-
-ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT), true)
+ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT),true)
 LOCAL_CFLAGS += -DUSE_SAMSUNG_COLORFORMAT
 LOCAL_C_INCLUDES += \
 	$(TOP)/hardware/samsung/exynos4/hal/include \
@@ -216,23 +184,49 @@ ifeq ($(BOARD_USE_TI_DUCATI_H264_PROFILE), true)
 LOCAL_CFLAGS += -DUSE_TI_DUCATI_H264_PROFILE
 endif
 
-LOCAL_MODULE:= libstagefright
-
-LOCAL_MODULE_TAGS := optional
-
-
 ifeq ($(TARGET_ENABLE_QC_AV_ENHANCEMENTS),true)
-    LOCAL_CFLAGS += -DENABLE_QC_AV_ENHANCEMENTS
-    LOCAL_SRC_FILES  += ExtendedWriter.cpp
-    LOCAL_SRC_FILES  += QCMediaDefs.cpp
+LOCAL_CFLAGS += -DENABLE_QC_AV_ENHANCEMENTS
+LOCAL_SRC_FILES  += ExtendedWriter.cpp
+LOCAL_SRC_FILES  += QCMediaDefs.cpp
     ifneq ($(TARGET_QCOM_MEDIA_VARIANT),)
-        LOCAL_C_INCLUDES += \
-            $(TOP)/hardware/qcom/media-$(TARGET_QCOM_MEDIA_VARIANT)/mm-core/inc
+    LOCAL_C_INCLUDES += \
+    $(TOP)/hardware/qcom/media-$(TARGET_QCOM_MEDIA_VARIANT)/mm-core/inc
     else
-        LOCAL_C_INCLUDES += \
-            $(TOP)/hardware/qcom/media/mm-core/inc
+    LOCAL_C_INCLUDES += \
+    $(TOP)/hardware/qcom/media/mm-core/inc
     endif
 endif
+
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+LOCAL_SRC_FILES += \
+    ActAudioExtractor.cpp             \
+    ActDataSource.cpp                 \
+    ActAudioDownMix.cpp               \
+    ActAudioDecoder.cpp               \
+    ActAudioEncoder.cpp               \
+    ActAudioWriter.cpp                \
+    ActVideoExtractor.cpp             \
+
+LOCAL_C_INCLUDES += \
+    $(call include-path-for, alsp) \
+    $(TOP)/frameworks/av/media/libstagefright/vendor/al_libc \
+    $(TOP)/frameworks/av/include/alsp/inc \
+    $(TOP)/hardware/libhardware/include/hardware \
+    $(TOP)/frameworks/av/media/libstagefright/vendor/mmminfo \
+    $(TOP)/frameworks/av/include/alsp/inc/common \
+
+LOCAL_STATIC_LIBRARIES += \
+    libmmminfo \
+    libid3parser \
+
+LOCAL_SHARED_LIBRARIES += \
+    libalc \
+
+LOCAL_CFLAGS += -DTURN_ON_MIDDLEWARE_FLAG
+endif
+
+LOCAL_MODULE:= libstagefright
+LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
 

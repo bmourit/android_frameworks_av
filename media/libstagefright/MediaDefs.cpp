@@ -24,7 +24,7 @@ const char *MEDIA_MIMETYPE_VIDEO_VPX = "video/x-vnd.on2.vp8";
 const char *MEDIA_MIMETYPE_VIDEO_AVC = "video/avc";
 const char *MEDIA_MIMETYPE_VIDEO_MPEG4 = "video/mp4v-es";
 const char *MEDIA_MIMETYPE_VIDEO_H263 = "video/3gpp";
-const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";
+//const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";//sync from zh, why?
 const char *MEDIA_MIMETYPE_VIDEO_RAW = "video/raw";
 
 const char *MEDIA_MIMETYPE_AUDIO_AMR_NB = "audio/3gpp";
@@ -54,5 +54,39 @@ const char *MEDIA_MIMETYPE_CONTAINER_WVM = "video/wvm";
 
 const char *MEDIA_MIMETYPE_TEXT_3GPP = "text/3gpp-tt";
 const char *MEDIA_MIMETYPE_TEXT_SUBRIP = "application/x-subrip";
+
+
+/*******************************Actions inside*********************************/
+const char *MEDIA_MIMETYPE_VIDEO_VC1 = "video/vc1";
+const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";
+const char *MEDIA_MIMETYPE_VIDEO_DIV3 = "video/div3";
+const char *MEDIA_MIMETYPE_VIDEO_RV = "video/rv";
+const char *MEDIA_MIMETYPE_VIDEO_AVS = "video/avs";
+const char *MEDIA_MIMETYPE_VIDEO_MJPG = "video/mjpg";
+const char *MEDIA_MIMETYPE_VIDEO_WMV8 = "video/wmv8";
+const char *MEDIA_MIMETYPE_VIDEO_RVG2 = "video/rvg2";
+const char *MEDIA_MIMETYPE_VIDEO_VP8 = "video/vp8";
+const char *MEDIA_MIMETYPE_VIDEO_VP6 = "video/vp6";
+const char *MEDIA_MIMETYPE_VIDEO_FLV1 ="video/flv1";
+
+const char *MEDIA_MIMETYPE_AUDIO_ACT_MP3 = "audio/MP3";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_AAC = "audio/AAC";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_WMASTD = "audio/WMASTD";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_WMALSL = "audio/WMALSL";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_WMAPRO = "audio/WMAPRO";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_COOK  = "audio/COOK";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_PCM = "audio/PCM";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_OGG = "audio/OGG";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_DTS = "audio/DTS";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_AC3 = "audio/AC3";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_APE = "audio/APE";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_FLAC= "audio/FLAC";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_ACELP = "audio/ACELP";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_MPC= "audio/MPC";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_AIFF = "audio/AIFF";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_AMR = "audio/AMR";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_SAMPLE = "audio/SAMPLE";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_ALAC = "audio/ALAC";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_AWB = "audio/AWB";
 
 }  // namespace android

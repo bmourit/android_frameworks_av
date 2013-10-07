@@ -99,6 +99,9 @@ struct AwesomePlayer {
 
     // This is a mask of MediaExtractor::Flags.
     uint32_t flags() const;
+#ifdef ACT_AUDIO
+    bool getStreamingFlag();
+#endif
 
     void postAudioEOS(int64_t delayUs = 0ll);
     void postAudioSeekComplete();
@@ -164,6 +167,9 @@ private:
     TimeSource *mTimeSource;
 
     String8 mUri;
+#ifdef ACT_AUDIO
+    String8 mNewUri;
+#endif
     KeyedVector<String8, String8> mUriHeaders;
 
     sp<DataSource> mFileSource;
@@ -188,9 +194,14 @@ private:
     uint32_t mExtractorFlags;
     uint32_t mSinceLastDropped;
 
+#ifdef ACT_AUDIO
+    int64_t mLastSetAudioTrackTimeUs;
+#endif
     int64_t mTimeSourceDeltaUs;
     int64_t mVideoTimeUs;
-
+#ifdef ACT_AUDIO
+    int32_t mIsStreamingFlag;
+#endif
     enum SeekType {
         NO_SEEK,
         SEEK,
@@ -228,7 +239,9 @@ private:
     bool mIsAsyncPrepare;
     status_t mPrepareResult;
     status_t mStreamDoneStatus;
-
+#ifdef ACT_AUDIO
+    bool mUsingMidwareAudioDecFlag;
+#endif
     void postVideoEvent_l(int64_t delayUs = -1);
     void postBufferingEvent_l();
     void postStreamDoneEvent_l(status_t status);

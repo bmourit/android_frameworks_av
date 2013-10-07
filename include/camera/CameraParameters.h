@@ -639,7 +639,6 @@ public:
     // Returns true if video stabilization is supported. That is, applications
     // can set KEY_VIDEO_STABILIZATION to true and have a stabilized preview
     // stream and record stabilized videos.
-    static const char KEY_VIDEO_STABILIZATION_SUPPORTED[];
 
     // Supported modes for special effects with light.
     // Example values: "lowlight,hdr".
@@ -726,12 +725,13 @@ public:
 #endif
 
     static const char KEY_AE_BRACKET_HDR[];
+    static const char KEY_VIDEO_STABILIZATION_SUPPORTED[];
 
-    // Value for KEY_ZOOM_SUPPORTED or KEY_SMOOTH_ZOOM_SUPPORTED.
+    // Value for KEY_ZOOM_SUPPORTED or KEY_SMOOTH_ZOOM_SUPPORTED
     static const char TRUE[];
     static const char FALSE[];
 
-    // Value for KEY_FOCUS_DISTANCES.
+    // Value for KEY_FOCUS_DISTANCES
     static const char FOCUS_DISTANCE_INFINITY[];
 
 #ifdef QCOM_HARDWARE

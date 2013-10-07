@@ -827,6 +827,11 @@ M4OSA_ERR VideoEditorVideoDecoder_configureFromMetadata(M4OSA_Context pContext,
 
     pDecShellContext->mCropRect.left = cropLeft;
     pDecShellContext->mCropRect.right = cropRight;
+#ifdef ACT_AUDIO
+    pDecShellContext->mCropRect.top = cropTop;
+    pDecShellContext->mCropRect.bottom = cropBottom;
+#endif
+
 #ifdef QCOM_HARDWARE
     pDecShellContext->mCropRect.top = cropTop;
     pDecShellContext->mCropRect.bottom = cropBottom;

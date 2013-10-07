@@ -139,8 +139,12 @@ status_t NuMediaExtractor::setDataSource(int fd, off64_t offset, off64_t size) {
     if (err != OK) {
         return err;
     }
-
+#ifdef ACT_AUDIO
+    const char mime_type[32] = "NuMediaExtractor";
+    mImpl = MediaExtractor::Create(fileSource,mime_type);
+#else
     mImpl = MediaExtractor::Create(fileSource);
+#endif
 
     if (mImpl == NULL) {
         return ERROR_UNSUPPORTED;

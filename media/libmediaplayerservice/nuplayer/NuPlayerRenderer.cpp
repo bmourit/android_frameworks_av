@@ -63,10 +63,12 @@ NuPlayer::Renderer::Renderer(
       last_mediaTimeUs_audio(0xfffff0000),
       last_mediaTimeUs_video(0xfffff0000),
       mSeeking(false){
+    }
 #else
       mVideoLateByUs(0ll) {
-#endif
 }
+#endif
+
 
 NuPlayer::Renderer::~Renderer() {
 }
@@ -235,7 +237,7 @@ void NuPlayer::Renderer::signalAudioSinkChanged() {
 }
 
 bool NuPlayer::Renderer::onDrainAudioQueue() {
-I=#ifdef ACT_AUDIO
+#ifdef ACT_AUDIO
     int skip = 0;
 #endif
     uint32_t numFramesPlayed;

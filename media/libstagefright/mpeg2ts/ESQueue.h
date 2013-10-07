@@ -64,6 +64,9 @@ private:
     List<RangeInfo> mRangeInfos;
 
     sp<MetaData> mFormat;
+#ifdef ACT_AUDIO
+    int8_t *init_buf;
+#endif
 
     sp<ABuffer> dequeueAccessUnitH264();
     sp<ABuffer> dequeueAccessUnitAAC();

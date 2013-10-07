@@ -18,7 +18,7 @@
 #define ActAudio_EXTRACTOR_H_
 
 #include <media/stagefright/MediaExtractor.h>
-#include "actal_posix_dev.h"
+#include <actal_posix_dev.h>
 #include "format_dev.h"
 #include "id3parse.h"
 #include "ActDataSource.h"

@@ -794,11 +794,8 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
         {
             int64_t seekTimeUs;
             CHECK(msg->findInt64("seekTimeUs", &seekTimeUs));
-#ifdef ACT_AUDIO
-            bool skipSeek = false;
-#endif
-            ALOGV("kWhatSeek seekTimeUs=%lld us", seekTimeUs);
 
+            ALOGV("kWhatSeek seekTimeUs=%lld us", seekTimeUs);
             mDeferredActions.push_back(
                     new SimpleAction(&NuPlayer::performDecoderFlush));
 
@@ -1276,6 +1273,7 @@ void NuPlayer::processDeferredActions() {
 
 void NuPlayer::performSeek(int64_t seekTimeUs) {
 #ifdef ACT_AUDIO
+            bool skipSeek = false;
     ALOGW("performSeek seekTimeUs=%lld us frome %Lld",
          seekTimeUs, mCurrentPosition);
 			if (mMaxSegDuration && 

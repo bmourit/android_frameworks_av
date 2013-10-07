@@ -67,10 +67,17 @@
 
 #include <media/stagefright/foundation/AMessage.h>
 
+#ifdef ACT_AUDIO
+#include <include/ActAudioDecoder.h>
+#endif
 #include <cutils/properties.h>
 
 #define USE_SURFACE_ALLOC 1
+#ifdef ACT_AUDIO
+#define FRAME_DROP_FREQ 10
+#else
 #define FRAME_DROP_FREQ 0
+#endif
 #define LPA_MIN_DURATION_USEC_ALLOWED 30000000
 #define LPA_MIN_DURATION_USEC_DEFAULT 60000000
 
@@ -220,10 +227,20 @@ AwesomePlayer::AwesomePlayer()
       mFrameDurationUs(kInitFrameDurationUs),
       mTextDriver(NULL),
       mIsFirstFrameAfterResume(false),
+#ifdef ACT_AUDIO
+      mBufferingDone(false),
+      mIsStreamingFlag(false){
+#else
       mBufferingDone(false) {
+#endif
     CHECK_EQ(mClient.connect(), (status_t)OK);
 
     DataSource::RegisterDefaultSniffers();
+#ifndef TURN_ON_MIDDLEWARE_FLAG
+		mUsingMidwareAudioDecFlag = false;
+#else
+		mUsingMidwareAudioDecFlag = true;
+#endif
 
     mVideoEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoEvent);
     mVideoEventPending = false;
@@ -265,6 +282,12 @@ AwesomePlayer::~AwesomePlayer() {
 
     mClient.disconnect();
 }
+
+#ifdef ACT_AUDIO
+bool AwesomePlayer::getStreamingFlag(){
+	return mIsStreamingFlag;
+}
+#endif
 
 void AwesomePlayer::printStats() {
     char value[PROPERTY_VALUE_MAX];
@@ -421,6 +444,18 @@ status_t AwesomePlayer::setDataSource(const sp<IStreamSource> &source) {
     return INVALID_OPERATION;
 }
 
+#ifdef ACT_AUDIO
+status_t AwesomePlayer::setDataSource_l(
+        const sp<DataSource> &dataSource) {
+    sp<MediaExtractor> extractor = MediaExtractor::Create(dataSource,NULL,this);
+
+    if (extractor == NULL) {
+        return UNKNOWN_ERROR;
+    }
+	if (extractor->getUsingMidwwareFlag() == false) {
+		mUsingMidwareAudioDecFlag = false;
+	}
+#else
 status_t AwesomePlayer::setDataSource_l(
         const sp<DataSource> &dataSource) {
     sp<MediaExtractor> extractor = MediaExtractor::Create(dataSource);
@@ -428,6 +463,7 @@ status_t AwesomePlayer::setDataSource_l(
     if (extractor == NULL) {
         return UNKNOWN_ERROR;
     }
+#endif
 
     if (extractor->getDrmFlag()) {
         checkDrmStatus(dataSource);
@@ -493,6 +529,13 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor) {
         String8 mime = String8(_mime);
 
         if (!haveVideo && !strncasecmp(mime.string(), "video/", 6)) {
+#ifdef ACT_AUDIO
+	    if (!(strncasecmp(mime.string(), "video/unsupport", sizeof("video/unsupport")))) {
+		ALOGE("setDataSource_l: unsupport video format(%s)!!!", mime.string());
+		haveVideo = false;
+		continue;
+	    }
+#endif
             setVideoSource(extractor->getTrack(i));
             haveVideo = true;
 
@@ -515,8 +558,17 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor) {
                     &mStats.mTracks.editItemAt(mStats.mVideoTrackIndex);
                 stat->mMIME = mime.string();
             }
+#ifdef ACT_AUDIO
+        } else if (!haveAudio && !strncasecmp(mime.string(), "audio/", 6)) {
+		if (!(strncasecmp(mime.string(), "audio/unsupport", sizeof("audio/unsupport")))) {
+			ALOGE("setDataSource_l: unsupport audio format(%s)!!!", mime.string());
+			haveAudio = false;
+			continue;
+		}
+#else
         } else if (!haveAudio && !strncasecmp(mime.string(), "audio/", 6) &&
                     !QCUtils::ShellProp::isAudioDisabled()) {
+#endif
             setAudioSource(extractor->getTrack(i));
             haveAudio = true;
             mActiveAudioTrackIndex = i;
@@ -530,7 +582,12 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor) {
                 stat->mMIME = mime.string();
             }
 
+#ifdef ACT_AUDIO
+            if (!strcasecmp(mime.string(), MEDIA_MIMETYPE_AUDIO_VORBIS) ||
+                !strcasecmp(mime.string(), MEDIA_MIMETYPE_AUDIO_ACT_OGG)) {
+#else
             if (!strcasecmp(mime.string(), MEDIA_MIMETYPE_AUDIO_VORBIS)) {
+#endif
                 // Only do this for vorbis audio, none of the other audio
                 // formats even support this ringtone specific hack and
                 // retrieving the metadata on some extractors may turn out
@@ -655,7 +712,9 @@ void AwesomePlayer::reset_l() {
     mExtractorFlags = 0;
     mTimeSourceDeltaUs = 0;
     mVideoTimeUs = 0;
-
+#ifdef ACT_AUDIO
+    mLastSetAudioTrackTimeUs = 0;
+#endif
     mSeeking = NO_SEEK;
     mSeekNotificationSent = true;
     mSeekTimeUs = 0;
@@ -734,7 +793,11 @@ bool AwesomePlayer::getBitrate(int64_t *bitrate) {
 bool AwesomePlayer::getCachedDuration_l(int64_t *durationUs, bool *eos) {
     int64_t bitrate;
 
+#ifdef ACT_AUDIO
+    if (mCachedSource != NULL && getBitrate(&bitrate) && (bitrate > 0)) {
+#else
     if (mCachedSource != NULL && getBitrate(&bitrate)) {
+#endif
         status_t finalStatus;
         size_t cachedDataRemaining = mCachedSource->approxDataRemaining(&finalStatus);
         *durationUs = cachedDataRemaining * 8000000ll / bitrate;
@@ -1137,8 +1200,13 @@ status_t AwesomePlayer::play_l() {
                 sendErrorNotification = true;
             }
 #endif
-            status_t err = startAudioPlayer_l(sendErrorNotification);
 
+#ifdef ACT_HARDWARE
+            status_t err = startAudioPlayer_l(
+                false /* sendErrorNotification */);
+#else
+            status_t err = startAudioPlayer_l(sendErrorNotification);
+#endif
             if (err != OK) {
                 delete mAudioPlayer;
                 mAudioPlayer = NULL;
@@ -1419,6 +1487,20 @@ status_t AwesomePlayer::setSurfaceTexture(const sp<IGraphicBufferProducer> &buff
     Mutex::Autolock autoLock(mLock);
 
     status_t err;
+#ifdef ACT_AUDIO
+    char cts_value[PROPERTY_VALUE_MAX];
+		int32_t isCTSFlag= 0;
+		property_get("ro.build_mode", cts_value, "NORMAL");
+		if(!strncmp(cts_value, "CTS",3)) {
+			isCTSFlag=1;
+		} else {
+			isCTSFlag=0;   	    
+		}
+		if(isCTSFlag==0) {
+			usleep(200*1000);
+		}
+#endif
+
     if (bufferProducer != NULL) {
         err = setNativeWindow_l(new Surface(bufferProducer));
     } else {
@@ -1624,11 +1706,36 @@ void AwesomePlayer::addTextSource_l(size_t trackIndex, const sp<MediaSource>& so
 
 status_t AwesomePlayer::initAudioDecoder() {
     ATRACE_CALL();
-
+#ifdef ACT_AUDIO
+    ALOGD("initAudioDecoder mUsingMidwareAudioDecFlag: %s", (mUsingMidwareAudioDecFlag == false) ? "false" : "true");
+    //if (mUsingMidwareAudioDecFlag == false) {
+    if (0) { //remove actdecoder
+	ALOGD("initAudioDecoder: using middleware audio decoder");
+	mAudioSource = new ActAudioDecoder(mAudioTrack);
+	if (mAudioSource != NULL) {
+		int64_t durationUs;
+		if (mAudioTrack->getFormat()->findInt64(kKeyDuration, &durationUs)) {
+			Mutex::Autolock autoLock(mMiscStateLock);
+			if (mDurationUs < 0 || durationUs > mDurationUs) {
+				mDurationUs = durationUs;
+				ALOGD("initAudioDecoder: durationUs: %lld  ",durationUs);
+			}
+		}
+		status_t err = mAudioSource->start();
+		if (err != OK) {
+        	    ALOGE("initAudioDecoder() => mAudioSource->start error(%d)", err);
+		    mAudioSource.clear();
+		    return err;
+		}
+	    } 
+	} else {
+		ALOGD("initAudioDecoder: using stagefright audio decoder");
+#endif
     sp<MetaData> meta = mAudioTrack->getFormat();
 
     const char *mime;
     CHECK(meta->findCString(kKeyMIMEType, &mime));
+
 #ifdef QCOM_ENHANCED_AUDIO
     int32_t nchannels = 0;
     int32_t isADTS = 0;
@@ -1748,6 +1855,11 @@ status_t AwesomePlayer::initAudioDecoder() {
     if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_RAW)) {
         mAudioSource = mAudioTrack;
     } else {
+#ifdef ACT_AUDIO
+	if (mIsStreamingFlag) {
+	    mAudioTrack->getFormat()->setInt32(kKeyActStreamingFlag, mIsStreamingFlag);
+	}
+#endif
         mAudioSource = OMXCodec::Create(
                 mClient.interface(), mAudioTrack->getFormat(),
                 false, // createEncoder
@@ -1776,6 +1888,9 @@ status_t AwesomePlayer::initAudioDecoder() {
         // altogether.
         return OK;
     }
+#ifdef ACT_AUDIO
+}
+#endif
 
     if (mAudioSource != NULL) {
         Mutex::Autolock autoLock(mStatsLock);
@@ -1846,12 +1961,35 @@ status_t AwesomePlayer::initVideoDecoder(uint32_t flags) {
     }
 #endif
     ALOGV("initVideoDecoder flags=0x%x", flags);
+#ifdef ACT_AUDIO
+	if (mIsStreamingFlag) {
+  		mVideoTrack->getFormat()->setInt32(kKeyActStreamingFlag, mIsStreamingFlag);
+  	}
+  	sp<MetaData> meta= mExtractor->getMetaData();
+  	const char *ConMimeType;
+  	bool success=meta->findCString(kKeyMIMEType,&ConMimeType);
+  	if(mIsStreamingFlag==true && success==true){
+  			success = !strcasecmp(ConMimeType, MEDIA_MIMETYPE_CONTAINER_WVM);
+  			if(success==true){          
+  				flags |= OMXCodec::kPreferSoftwareCodecs;
+  			}
+  	}
+#endif
+
     mVideoSource = OMXCodec::Create(
             mClient.interface(), mVideoTrack->getFormat(),
             false, // createEncoder
             mVideoTrack,
             NULL, flags, USE_SURFACE_ALLOC ? mNativeWindow : NULL);
 
+#ifdef ACT_AUDIO
+    if(mIsStreamingFlag==true && success==true) {
+		success = !strcasecmp(ConMimeType, MEDIA_MIMETYPE_CONTAINER_WVM);
+  		if(success==true) {
+  			flags &= ~(OMXCodec::kPreferSoftwareCodecs);
+  		}
+  	}
+#endif
     if (mVideoSource != NULL) {
         int64_t durationUs;
         if (mVideoTrack->getFormat()->findInt64(kKeyDuration, &durationUs)) {
@@ -2070,6 +2208,9 @@ void AwesomePlayer::onVideoEvent() {
     }
 
     int64_t timeUs;
+#ifdef ACT_AUDIO
+    int32_t framewidth;
+#endif
     CHECK(mVideoBuffer->meta_data()->findInt64(kKeyTime, &timeUs));
     if ((mLastVideoTimeUs != timeUs)
           && (mLastVideoTimeUs > 0)
@@ -2120,6 +2261,12 @@ void AwesomePlayer::onVideoEvent() {
         ((mFlags & AUDIO_AT_EOS) || !(mFlags & AUDIOPLAYER_STARTED))
             ? &mSystemTimeSource : mTimeSource;
 
+#ifdef ACT_AUDIO
+    if(mVideoSource->getFormat()->findInt32(kKeyWidth,&framewidth) && framewidth>3840){
+    	ts=&mSystemTimeSource;
+    }
+#endif
+
     if (mFlags & FIRST_FRAME) {
         modifyFlags(FIRST_FRAME, CLEAR);
         mSinceLastDropped = 0;
@@ -2141,6 +2288,7 @@ void AwesomePlayer::onVideoEvent() {
         mTimeSourceDeltaUs = realTimeUs - mediaTimeUs;
     }
 
+#ifndef TURN_ON_MIDDLEWARE_FLAG
     if (wasSeeking == SEEK_VIDEO_ONLY) {
         nowUs = ts->getRealTimeUs() - mTimeSourceDeltaUs;
 
@@ -2152,6 +2300,7 @@ void AwesomePlayer::onVideoEvent() {
             ALOGI("after SEEK_VIDEO_ONLY we're late by %.2f secs", latenessUs / 1E6);
         }
     }
+#endif
 
     if (wasSeeking == NO_SEEK) {
         // Let's display the first frame after seeking right away.
@@ -2162,6 +2311,7 @@ void AwesomePlayer::onVideoEvent() {
 
         ATRACE_INT("Video Lateness (ms)", latenessUs / 1E3);
 
+#ifndef TURN_ON_MIDDLEWARE_FLAG
         if (latenessUs > 500000ll
                 && mAudioPlayer != NULL
                 && mAudioPlayer->getMediaTimeMapping(
@@ -2185,7 +2335,7 @@ void AwesomePlayer::onVideoEvent() {
                 ALOGI("we're very late (%.2f secs)", latenessUs / 1E6);
             }
         }
-
+#endif
         if (latenessUs > 40000) {
             // We're more than 40ms late.
             ALOGV("we're late by %lld us (%.2f secs)",
@@ -2447,6 +2597,9 @@ status_t AwesomePlayer::finishSetDataSource_l() {
 
         String8 newURI = String8("http://");
         newURI.append(mUri.string() + 11);
+#ifdef ACT_AUDIO
+	mIsStreamingFlag = true;
+#endif
 
         mUri = newURI;
     }
@@ -2456,6 +2609,10 @@ status_t AwesomePlayer::finishSetDataSource_l() {
     if (!strncasecmp("http://", mUri.string(), 7)
             || !strncasecmp("https://", mUri.string(), 8)
             || isWidevineStreaming) {
+#ifdef ACT_AUDIO
+        mIsStreamingFlag = true;
+        ALOGI("finishSetDataSource_l: https:// http:// isWidevineStreaming: %d mIsStreamingFlag: %d", isWidevineStreaming, mIsStreamingFlag);
+#endif
         mConnectingDataSource = HTTPBase::Create(
                 (mFlags & INCOGNITO)
                     ? HTTPBase::kFlagIncognito
@@ -2475,6 +2632,11 @@ status_t AwesomePlayer::finishSetDataSource_l() {
         mLock.lock();
 
         if (err != OK) {
+#ifdef ACT_AUDIO
+        ALOGE("finishSetDataSource_l: mConnectingDataSource->connect() !OK returned %d", err);
+	mNewUri= mConnectingDataSource->getUri();	
+	ALOGI("finishSetDataSource_l: set new uri length: %d uri: %s", mNewUri.length(), mNewUri.string());
+#endif
             mConnectingDataSource.clear();
 
             ALOGI("mConnectingDataSource->connect() returned %d", err);
@@ -2547,10 +2709,18 @@ status_t AwesomePlayer::finishSetDataSource_l() {
                         String8 tmp;
                         float confidence;
                         sp<AMessage> meta;
+#ifdef ACT_AUDIO
+                        if (!dataSource->sniff(&tmp, &confidence, &meta)) {
+                         //   mLock.lock();
+                         //   return UNKNOWN_ERROR;
+			    break;
+                        }
+#else
                         if (!dataSource->sniff(&tmp, &confidence, &meta)) {
                             mLock.lock();
                             return UNKNOWN_ERROR;
                         }
+#endif
 
                         // We successfully identified the file's extractor to
                         // be, remember this mime type so we don't have to
@@ -2622,8 +2792,12 @@ status_t AwesomePlayer::finishSetDataSource_l() {
             mWVMExtractor->setUID(mUID);
         extractor = mWVMExtractor;
     } else {
+#ifndef TURN_ON_MIDDLEWARE_FLAG
         extractor = MediaExtractor::Create(
                 dataSource, sniffedMIME.empty() ? NULL : sniffedMIME.c_str());
+#else 
+    	extractor = MediaExtractor::Create(dataSource, sniffedMIME.empty() ? NULL : sniffedMIME.c_str(), this);
+#endif
 
         if (extractor == NULL) {
             return UNKNOWN_ERROR;
@@ -2633,7 +2807,9 @@ status_t AwesomePlayer::finishSetDataSource_l() {
     if (extractor->getDrmFlag()) {
         checkDrmStatus(dataSource);
     }
-
+    if (extractor->getUsingMidwwareFlag() == false) {
+		 mUsingMidwareAudioDecFlag = false;
+	 }
     status_t err = setDataSource_l(extractor);
 
     if (err != OK) {
@@ -2736,9 +2912,15 @@ void AwesomePlayer::postAudioEOS(int64_t delayUs) {
     postCheckAudioStatusEvent(delayUs);
 }
 
+#ifdef ACT_AUDIO
+void AwesomePlayer::postAudioSeekComplete() {
+    postCheckAudioStatusEvent(50000);
+}
+#else
 void AwesomePlayer::postAudioSeekComplete() {
     postCheckAudioStatusEvent(0);
 }
+#endif
 
 status_t AwesomePlayer::setParameter(int key, const Parcel &request) {
     switch (key) {
@@ -2831,6 +3013,160 @@ status_t AwesomePlayer::getTrackInfo(Parcel *reply) const {
     return OK;
 }
 
+#if 1
+status_t AwesomePlayer::selectAudioTrack_l(const sp<MediaSource>& source,size_t index) {
+	ALOGV("Entry setAudioTrack()");
+	ALOGD("setAudioTrack : %d", index);
+    CHECK(mExtractor != NULL);
+    if ((ssize_t)index == mActiveAudioTrackIndex) {
+            ALOGI("Track %d is active. Does nothing.", index);
+            return OK;
+    }
+
+    bool setTrackAtPlaying = false;   
+#if 0
+    bool tagPlaying = false;
+    bool setTrackAtPause = false;
+	
+    if(mFlags & PREPARED || mFlags & FIRST_FRAME) {
+	ALOGD("tagPlaying = true");
+    	tagPlaying = true;
+    }		
+
+    if(!(mFlags & PLAYING)) {
+    	ALOGI(" setAudioTrack during pause flag= %x", mFlags);
+	setTrackAtPause = true;
+	tagPlaying = false;
+    }
+#endif
+
+#if 1 //to be continue
+    // setAudioTrack() would be called by APP at prepare() when starting;  do not need to call pause_l();
+    if(mFlags & PLAYING) {
+    	setTrackAtPlaying = true;
+  	ALOGI("setAudioTrack at playing, now pause");
+    	//make sure we get the proper extractor status and data
+    	pause_l();
+    	//FIXME : make sure awesomeplayer idle;
+    	//usleep(30000);    	
+    }else{
+    	ALOGI("setAudioTrack at pause or beginning");
+    }
+	
+#endif
+
+    int64_t realTimeUs, mediaTimeUs, deltaUs, nowUs;
+    TimeSource *ts = (mFlags & AUDIO_AT_EOS) ? &mSystemTimeSource : mTimeSource;
+
+    if (!(mFlags & AUDIO_AT_EOS) && mAudioPlayer != NULL
+        && mAudioPlayer->getMediaTimeMapping(&realTimeUs, &mediaTimeUs)) {
+    		deltaUs = realTimeUs - mediaTimeUs;
+    		nowUs = ts? (ts->getRealTimeUs()- deltaUs) : 0;
+		mLastSetAudioTrackTimeUs = nowUs;	
+    }else{    	//audioplayer not start
+		if(!setTrackAtPlaying){ 
+			ALOGI("setAudioTrack again at pause state, use mLastSetAudioTrackTimeUs %lld",mLastSetAudioTrackTimeUs);
+			nowUs = mLastSetAudioTrackTimeUs;    		
+		}else{	
+			nowUs = ts? ts->getRealTimeUs():0;
+			mLastSetAudioTrackTimeUs = nowUs;	
+		}
+    }
+
+    status_t ret = mExtractor->setAudioTrack(index, nowUs);
+    if(ret == INVALID_OPERATION)
+    {
+    	//do nothing
+    	ALOGW("INVALID_OPERATION, index:%d,  nowUs: %lld ", index, nowUs);
+    	ret = OK;
+    } else if (ret == OK) {
+
+        mAudioTrack.clear();
+        setAudioSource(mExtractor->getTrack(index));
+
+        if (mAudioPlayer == NULL && mAudioSource != NULL) {
+ALOGE("mAudioSource stop start1 \n");
+            mAudioSource->stop();
+ALOGE("mAudioSource stop end1 \n");
+        }
+
+        mAudioSource.clear();
+   
+        ret = initAudioDecoder();
+        delete mAudioPlayer;
+
+        mAudioPlayer = NULL;
+
+	 modifyFlags(AUDIOPLAYER_STARTED, CLEAR);
+	 modifyFlags(AUDIO_RUNNING, CLEAR);
+		
+        if(ret == NO_ERROR) {
+            mTimeSource = NULL;
+            //setAudioPlayer();
+            //replace this gingerbread function, by samuel
+        if (mAudioSource != NULL) {
+                if (mAudioPlayer == NULL) {
+                    if (mAudioSink != NULL) {
+                        mAudioPlayer = new AudioPlayer(mAudioSink,false, this);
+                        mAudioPlayer->setSource(mAudioSource);
+	                        //seekAudioIfNecessary_l();
+	                    }
+	                }
+			/*
+	                CHECK(!(mFlags & AUDIO_RUNNING));
+	                status_t err = startAudioPlayer_l(false);
+	                if (err != OK) {
+	                    delete mAudioPlayer;
+	                    mAudioPlayer = NULL;
+	                    modifyFlags((PLAYING | FIRST_FRAME), CLEAR);
+	                    if (mDecryptHandle != NULL) {
+	                        mDrmManagerClient->setPlaybackStatus(
+	                                mDecryptHandle, Playback::STOP, 0);
+	                    }
+	                    return err;
+	                }
+	               */
+			mTimeSource = mAudioPlayer;	
+	        }
+	        // done, by samuel
+  
+        } else {
+        	ALOGE("%s %d error", __FUNCTION__, __LINE__);;
+        }
+	/*		
+        if(mAudioPlayer != NULL) {		
+        	mAudioPlayer->pause();
+        }
+        if(mVideoSource != NULL) {	
+           	mVideoSource->pause();
+        }
+       // modifyFlags(PLAYING, CLEAR);
+	 modifyFlags(AUDIO_RUNNING, CLEAR); 
+	*/
+    }	
+
+#if 1//to be continue
+    if(setTrackAtPlaying) {
+    	ALOGI("resume playing after setAudioTrack");
+    	play_l();
+    } 
+#endif
+
+#if 0 
+    if(setTrackAtPause){
+	ALOGI("resume pause after setAudioTrack");
+       pause_l();
+    }
+    if(tagPlaying) {
+    	play_l();
+    }
+	
+#endif	
+    ALOGV("Exit setAudioTrack()");
+    mActiveAudioTrackIndex = index;
+    return ret;
+}
+#else
 status_t AwesomePlayer::selectAudioTrack_l(
         const sp<MediaSource>& source, size_t trackIndex) {
 
@@ -2901,6 +3237,7 @@ status_t AwesomePlayer::selectAudioTrack_l(
 
     return OK;
 }
+#endif
 
 status_t AwesomePlayer::selectTrack(size_t trackIndex, bool select) {
     ATRACE_CALL();

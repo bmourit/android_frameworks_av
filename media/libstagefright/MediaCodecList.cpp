@@ -74,8 +74,11 @@ MediaCodecList::MediaCodecList()
         line.append(" supports ");
         for (size_t j = 0; j < mTypes.size(); ++j) {
             uint32_t value = mTypes.valueAt(j);
-
+#ifdef ACT_AUDIO
+            if (info.mTypes & (1ull << value)) {
+#else
             if (info.mTypes & (1ul << value)) {
+#endif
                 line.append(mTypes.keyAt(j));
                 line.append(" ");
             }
@@ -395,8 +398,11 @@ void MediaCodecList::addType(const char *name) {
     ssize_t index = mTypes.indexOfKey(name);
     if (index < 0) {
         bit = mTypes.size();
-
+#ifdef ACT_AUDIO
+        if (bit == 64) {
+#else
         if (bit == 32) {
+#endif
             ALOGW("Too many distinct type names in configuration.");
             return;
         }
@@ -418,7 +424,11 @@ ssize_t MediaCodecList::findCodecByType(
         return -ENOENT;
     }
 
+#ifdef ACT_AUDIO
+    uint64_t typeMask = 1ull << mTypes.valueAt(typeIndex);
+#else
     uint32_t typeMask = 1ul << mTypes.valueAt(typeIndex);
+#endif
 
     while (startIndex < mCodecInfos.size()) {
         const CodecInfo &info = mCodecInfos.itemAt(startIndex);
@@ -496,7 +506,11 @@ status_t MediaCodecList::getSupportedTypes(
     const CodecInfo &info = mCodecInfos.itemAt(index);
 
     for (size_t i = 0; i < mTypes.size(); ++i) {
+#ifdef ACT_AUDIO
+        uint64_t typeMask = 1ull << mTypes.valueAt(i);
+#else
         uint32_t typeMask = 1ul << mTypes.valueAt(i);
+#endif
 
         if (info.mTypes & typeMask) {
             types->push(mTypes.keyAt(i));
