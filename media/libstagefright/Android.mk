@@ -76,7 +76,7 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/native/include/media/openmax \
         $(TOP)/external/flac/include \
         $(TOP)/external/tremolo \
-        $(TOP)/external/openssl/include \
+        $(TOP)/external/openssl/include
 
 ifneq ($(TI_CUSTOM_DOMX_PATH),)
 LOCAL_C_INCLUDES += $(TI_CUSTOM_DOMX_PATH)/omx_core/inc
@@ -159,7 +159,6 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_SRC_FILES += \
         chromium_http_stub.cpp
-
 LOCAL_CPPFLAGS += -DCHROMIUM_AVAILABLE=1
 
 LOCAL_SHARED_LIBRARIES += libstlport
@@ -169,25 +168,33 @@ LOCAL_SHARED_LIBRARIES += \
         libstagefright_enc_common \
         libstagefright_avc_common \
         libstagefright_foundation \
-        libdl \
+        libdl
 
 LOCAL_CFLAGS += -Wno-multichar
 
-ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT),true)
+ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT), true)
 LOCAL_CFLAGS += -DUSE_SAMSUNG_COLORFORMAT
+
+# Include native color format header path
 LOCAL_C_INCLUDES += \
 	$(TOP)/hardware/samsung/exynos4/hal/include \
 	$(TOP)/hardware/samsung/exynos4/include
+
 endif
 
 ifeq ($(BOARD_USE_TI_DUCATI_H264_PROFILE), true)
 LOCAL_CFLAGS += -DUSE_TI_DUCATI_H264_PROFILE
 endif
 
+LOCAL_MODULE:= libstagefright
+
+LOCAL_MODULE_TAGS := optional
+
+
 ifeq ($(TARGET_ENABLE_QC_AV_ENHANCEMENTS),true)
-LOCAL_CFLAGS += -DENABLE_QC_AV_ENHANCEMENTS
-LOCAL_SRC_FILES  += ExtendedWriter.cpp
-LOCAL_SRC_FILES  += QCMediaDefs.cpp
+    LOCAL_CFLAGS += -DENABLE_QC_AV_ENHANCEMENTS
+    LOCAL_SRC_FILES  += ExtendedWriter.cpp
+    LOCAL_SRC_FILES  += QCMediaDefs.cpp
     ifneq ($(TARGET_QCOM_MEDIA_VARIANT),)
     LOCAL_C_INCLUDES += \
     $(TOP)/hardware/qcom/media-$(TARGET_QCOM_MEDIA_VARIANT)/mm-core/inc
@@ -225,8 +232,6 @@ LOCAL_SHARED_LIBRARIES += \
 LOCAL_CFLAGS += -DTURN_ON_MIDDLEWARE_FLAG
 endif
 
-LOCAL_MODULE:= libstagefright
-LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
 
