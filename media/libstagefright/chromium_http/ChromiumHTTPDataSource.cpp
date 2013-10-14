@@ -309,6 +309,14 @@ String8 ChromiumHTTPDataSource::getUri() {
     return String8(mURI.c_str());
 }
 
+#ifdef ACT_HARDWARE
+void ChromiumHTTPDataSource::setUri(AString url) {
+   Mutex::Autolock autoLock(mLock);
+   mURI = url;
+   //LOG_PRI(ANDROID_LOG_VERBOSE, LOG_TAG, "setUri: ----------- OK!!!");
+}
+#endif
+
 String8 ChromiumHTTPDataSource::getMIMEType() const {
     Mutex::Autolock autoLock(mLock);
 
