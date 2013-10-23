@@ -14,6 +14,8 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/include \
         $(call include-path-for, alsp)
 
+LOCAL_CFLAGS += -fno-strict-aliasing
+
 LOCAL_MODULE := libmmminfo
 
 include $(BUILD_STATIC_LIBRARY)
