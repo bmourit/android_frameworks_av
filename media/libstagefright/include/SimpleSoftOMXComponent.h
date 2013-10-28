@@ -72,7 +72,6 @@ protected:
     virtual void onPortFlushCompleted(OMX_U32 portIndex);
     virtual void onPortEnableCompleted(OMX_U32 portIndex, bool enabled);
     virtual void onReset();
-    void onPortFlush2(OMX_U32 portIndex, bool sendFlushComplete);
 
     PortInfo *editPortInfo(OMX_U32 portIndex);
 
@@ -133,7 +132,7 @@ private:
     void onSendCommand(OMX_COMMANDTYPE cmd, OMX_U32 param);
     void onChangeState(OMX_STATETYPE state);
     void onPortEnable(OMX_U32 portIndex, bool enable);
-    virtual void onPortFlush(OMX_U32 portIndex, bool sendFlushComplete);
+    void onPortFlush(OMX_U32 portIndex, bool sendFlushComplete);
 
     void checkTransitions();
 

@@ -86,7 +86,7 @@ StagefrightRecorder::StagefrightRecorder()
       mOutputFd(-1),
       mAudioSource(AUDIO_SOURCE_CNT),
       mVideoSource(VIDEO_SOURCE_LIST_END),
-      mStarted(false), mPaused(false), mSurfaceMediaSource(NULL),
+      mStarted(false), mSurfaceMediaSource(NULL),
       mCaptureTimeLapse(false) {
 
     ALOGV("Constructor");
@@ -805,25 +805,15 @@ status_t StagefrightRecorder::prepare() {
 
 status_t StagefrightRecorder::start() {
     CHECK_GE(mOutputFd, 0);
-    status_t status = OK;
 
     // Get UID here for permission checking
     mClientUid = IPCThreadState::self()->getCallingUid();
     if (mWriter != NULL) {
-        //if in Pause state, we just start the writer
-        if(mPaused){
-            int64_t startTimeUs = systemTime() / 1000;
-            sp<MetaData> meta = new MetaData;
-            meta->setInt64(kKeyTime, startTimeUs);
-
-            status = mWriter->start(meta.get());
-            ALOGV("%s: successfully re-start the writer",__FUNCTION__);
-            mPaused = false;
-            goto exit;
-        }
         ALOGE("File writer is not avaialble");
         return UNKNOWN_ERROR;
     }
+
+    status_t status = OK;
 
     switch (mOutputFormat) {
         case OUTPUT_FORMAT_DEFAULT:
@@ -874,7 +864,6 @@ status_t StagefrightRecorder::start() {
             break;
     }
 
-exit:
     if ((status == OK) && (!mStarted)) {
         mStarted = true;
 
@@ -1919,13 +1908,10 @@ status_t StagefrightRecorder::startMPEG4Recording() {
 
 status_t StagefrightRecorder::pause() {
     ALOGV("pause");
-    status_t status = OK;
     if (mWriter == NULL) {
         return UNKNOWN_ERROR;
     }
-
-    status = mWriter->pause();
-    mPaused = true;
+    mWriter->pause();
 
     if (mStarted) {
         mStarted = false;
@@ -1941,9 +1927,8 @@ status_t StagefrightRecorder::pause() {
         addBatteryData(params);
     }
 
-    ALOGV("pause returned with rc = %d", status);
 
-    return status;
+    return OK;
 }
 
 status_t StagefrightRecorder::stop() {

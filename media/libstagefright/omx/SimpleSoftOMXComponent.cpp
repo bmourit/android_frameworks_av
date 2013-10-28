@@ -488,13 +488,6 @@ void SimpleSoftOMXComponent::onPortEnable(OMX_U32 portIndex, bool enable) {
     checkTransitions();
 }
 
-
-void SimpleSoftOMXComponent::onPortFlush2(
-        OMX_U32 portIndex, bool sendFlushComplete) {
-    SimpleSoftOMXComponent::onPortFlush(portIndex,sendFlushComplete);
-
-}
-
 void SimpleSoftOMXComponent::onPortFlush(
         OMX_U32 portIndex, bool sendFlushComplete) {
     if (portIndex == OMX_ALL) {

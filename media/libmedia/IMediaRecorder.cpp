@@ -36,7 +36,6 @@ enum {
     QUERY_SURFACE_MEDIASOURCE,
     RESET,
     STOP,
-    PAUSE,
     START,
     PREPARE,
     GET_MAX_AMPLITUDE,
@@ -257,15 +256,6 @@ public:
         return reply.readInt32();
     }
 
-    status_t pause()
-    {
-        ALOGV("pause");
-        Parcel data, reply;
-        data.writeInterfaceToken(IMediaRecorder::getInterfaceDescriptor());
-        remote()->transact(PAUSE, data, &reply);
-        return reply.readInt32();
-    }
-
     status_t stop()
     {
         ALOGV("stop");
@@ -341,13 +331,6 @@ status_t BnMediaRecorder::onTransact(
             reply->writeInt32(stop());
             return NO_ERROR;
         } break;
-        case PAUSE: {
-            ALOGV("PAUSE");
-            CHECK_INTERFACE(IMediaRecorder, data, reply);
-            reply->writeInt32(pause());
-            return NO_ERROR;
-        } break;
-
         case START: {
             ALOGV("START");
             CHECK_INTERFACE(IMediaRecorder, data, reply);

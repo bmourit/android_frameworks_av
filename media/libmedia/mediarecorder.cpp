@@ -483,7 +483,7 @@ status_t MediaRecorder::start()
         ALOGE("media recorder is not initialized yet");
         return INVALID_OPERATION;
     }
-    if (!(mCurrentState & (MEDIA_RECORDER_PREPARED | MEDIA_RECORDER_PAUSED))) {
+    if (!(mCurrentState & MEDIA_RECORDER_PREPARED)) {
         ALOGE("start called in an invalid state: %d", mCurrentState);
         return INVALID_OPERATION;
     }
@@ -498,29 +498,6 @@ status_t MediaRecorder::start()
     return ret;
 }
 
-status_t MediaRecorder::pause()
-{
-    ALOGV("pause");
-    if (mMediaRecorder == NULL) {
-        ALOGE("media recorder is not initialized yet");
-        return INVALID_OPERATION;
-    }
-    if (!(mCurrentState & MEDIA_RECORDER_RECORDING)) {
-        ALOGE("pause called in an invalid state: %d", mCurrentState);
-        return INVALID_OPERATION;
-    }
-
-    status_t ret = mMediaRecorder->pause();
-    if (OK != ret) {
-        ALOGE("pause failed: %d", ret);
-        mCurrentState = MEDIA_RECORDER_ERROR;
-        return ret;
-    }
-
-    mCurrentState = MEDIA_RECORDER_PAUSED;
-    return ret;
-}
-
 status_t MediaRecorder::stop()
 {
     ALOGV("stop");
@@ -528,7 +505,7 @@ status_t MediaRecorder::stop()
         ALOGE("media recorder is not initialized yet");
         return INVALID_OPERATION;
     }
-    if (!(mCurrentState & (MEDIA_RECORDER_RECORDING | MEDIA_RECORDER_PAUSED))) {
+    if (!(mCurrentState & MEDIA_RECORDER_RECORDING)) {
         ALOGE("stop called in an invalid state: %d", mCurrentState);
         return INVALID_OPERATION;
     }
@@ -564,7 +541,6 @@ status_t MediaRecorder::reset()
             ret = OK;
             break;
 
-        case MEDIA_RECORDER_PAUSED:
         case MEDIA_RECORDER_RECORDING:
         case MEDIA_RECORDER_DATASOURCE_CONFIGURED:
         case MEDIA_RECORDER_PREPARED:
