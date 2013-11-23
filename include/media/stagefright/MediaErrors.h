@@ -42,6 +42,15 @@ enum {
     INFO_DISCONTINUITY     = MEDIA_ERROR_BASE - 13,
     INFO_OUTPUT_BUFFERS_CHANGED = MEDIA_ERROR_BASE - 14,
 
+#ifdef ACT_CODECS	
+    /* 
+     * These errors are for when media continues playing audio,
+     * while video is lost.
+     */
+     INFO_NO_RAW_DATA_NOW     = MEDIA_ERROR_BASE - 15,
+     ERROR_READ_TIME_OUT_SP   = MEDIA_ERROR_BASE - 16,
+#endif
+
     // The following constant values should be in sync with
     // drm/drm_framework_common.h
     DRM_ERROR_BASE = -2000,

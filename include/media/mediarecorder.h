@@ -67,6 +67,12 @@ enum output_format {
     /* H.264/AAC data encapsulated in MPEG2/TS */
     OUTPUT_FORMAT_MPEG2TS = 8,
 
+#ifdef ACT_CODECS
+    OUTPUT_FORMAT_WAV = 12,
+    OUTPUT_FORMAT_MP3 = 13,
+    OUTPUT_FORMAT_WMA = 14,
+#endif
+
     OUTPUT_FORMAT_LIST_END // must be last - used to validate format type
 };
 
@@ -78,6 +84,12 @@ enum audio_encoder {
     AUDIO_ENCODER_HE_AAC = 4,
     AUDIO_ENCODER_AAC_ELD = 5,
 
+#ifdef ACT_CODECS
+    AUDIO_ENCODER_PCM = 6,
+    AUDIO_ENCODER_ADPCM = 7,
+    AUDIO_ENCODER_MP3 = 8,    
+    AUDIO_ENCODER_WMA = 9,
+#endif
     AUDIO_ENCODER_LIST_END // must be the last - used to validate the audio encoder type
 };
 
@@ -158,6 +170,12 @@ enum media_recorder_info_type {
 
     MEDIA_RECORDER_INFO_MAX_DURATION_REACHED      = 800,
     MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED      = 801,
+
+#ifdef ACT_AUDIO
+    MEDIA_RECORDER_INFO_COMPLETION_STATUS         = 802,
+    MEDIA_RECORDER_INFO_PROGRESS_FRAME_STATUS     = 803,
+    MEDIA_RECORDER_INFO_PROGRESS_TIME_STATUS      = 804,
+#endif
 
     // All track related informtional events start here
     MEDIA_RECORDER_TRACK_INFO_LIST_START           = 1000,

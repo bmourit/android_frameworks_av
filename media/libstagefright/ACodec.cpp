@@ -39,6 +39,17 @@
 
 #include "include/avc_utils.h"
 
+#ifdef ACT_AUDIO
+#include <actal_posix_dev.h>
+#include <ALdec_plugin.h>
+#include "gralloc_priv.h"
+#include "ACT_OMX_Index.h"
+
+#define ACTIONS_PREFIX		"OMX.Action"
+#define ACTIONS_VIDEO_DECODER 	ACTIONS_PREFIX".Video.Decoder"
+#define ACTIONS_AUDIO_DECODER 	ACTIONS_PREFIX".Audio.Decoder"
+#endif
+
 namespace android {
 
 template<class T>
@@ -965,6 +976,10 @@ status_t ACodec::setComponentRole(
             "audio_decoder.flac", "audio_encoder.flac" },
         { MEDIA_MIMETYPE_AUDIO_MSGSM,
             "audio_decoder.gsm", "audio_encoder.gsm" },
+#ifdef ACT_AUDIO
+        { MEDIA_MIMETYPE_AUDIO_ACT_AAC,
+            "audio_decoder.aac", ""},
+#endif
     };
 
     static const size_t kNumMimeToRole =
@@ -1171,6 +1186,12 @@ status_t ACodec::configureCodec(
                     || !msg->findInt32("height", &height)) {
                 err = INVALID_OPERATION;
             } else {
+
+#ifdef ACT_CODEC
+            video_display_w = width;
+            video_display_h = height;
+#endif
+
                 err = setupVideoDecoder(mime, width, height);
             }
         }

@@ -216,6 +216,12 @@ private:
 
     bool mPaused;
 
+#ifdef ACT_CODECS
+    int32_t mIsStreamingFlag;
+    int64_t mKBufferFilledEventTimeOutNs;
+    int IS_THUMBNAIL;
+#endif
+
     sp<ANativeWindow> mNativeWindow;
 
     // The index in each of the mPortBuffers arrays of the buffer that will be

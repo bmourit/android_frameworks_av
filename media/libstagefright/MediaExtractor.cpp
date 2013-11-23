@@ -17,7 +17,10 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "MediaExtractor"
 #include <utils/Log.h>
-
+#ifdef ACT_AUDIO
+#include "include/ActAudioExtractor.h"
+#include "include/ActVideoExtractor.h"
+#endif
 #include "include/AMRExtractor.h"
 #include "include/MP3Extractor.h"
 #include "include/MPEG4Extractor.h"

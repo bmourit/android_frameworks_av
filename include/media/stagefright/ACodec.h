@@ -202,6 +202,11 @@ private:
 
     int64_t mRepeatFrameDelayUs;
 
+#ifdef ACT_CODECS
+    int32_t video_display_w;
+    int32_t video_display_h;
+#endif
+
     status_t setCyclicIntraMacroblockRefresh(const sp<AMessage> &msg, int32_t mode);
     status_t allocateBuffersOnPort(OMX_U32 portIndex);
     status_t freeBuffersOnPort(OMX_U32 portIndex);
@@ -303,6 +308,14 @@ private:
     void onSignalEndOfInputStream();
 
     DISALLOW_EVIL_CONSTRUCTORS(ACodec);
+
+#ifdef ACT_CODECS
+    sp<ABuffer> special_data;
+    int special_data_cpy_flag;
+    int mpeg4_special_data_flag;
+    bool mIsCodecNeedFlush;
+#endif
+
 };
 
 }  // namespace android

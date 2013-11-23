@@ -54,6 +54,9 @@
 
 #include <media/stagefright/foundation/AMessage.h>
 
+#ifdef ACT_AUDIO
+#include <include/ActAudioDecoder.h>
+#endif
 #include <cutils/properties.h>
 
 #define USE_SURFACE_ALLOC 1

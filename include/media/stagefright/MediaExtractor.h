@@ -62,6 +62,16 @@ public:
     bool getDrmFlag() {
         return mIsDrm;
     }
+
+#ifdef ACT_AUDIO
+    virtual void setUsingMidwwareFlag(bool usingMidwareFlag) {
+        mIsMidware = usingMidwareFlag;
+    };
+    virtual bool getUsingMidwwareFlag() {
+        return mIsMidware;
+    }
+#endif
+
     virtual char* getDrmTrackInfo(size_t trackID, int *len) {
         return NULL;
     }
@@ -72,6 +82,10 @@ protected:
 
 private:
     bool mIsDrm;
+
+#ifdef ACT_AUDIO
+    bool mIsMidware;
+#endif
 
     MediaExtractor(const MediaExtractor &);
     MediaExtractor &operator=(const MediaExtractor &);

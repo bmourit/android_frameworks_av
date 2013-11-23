@@ -51,6 +51,11 @@ public:
     virtual status_t initCheck() const = 0;
 
     virtual ssize_t readAt(off64_t offset, void *data, size_t size) = 0;
+    // bnmguy
+    virtual ssize_t readAt64(off64_t offset, void *data, size_t size) {
+    	return readAt((off_t)offset, data, size);
+    }
+    // end
 
     // Convenience methods:
     bool getUInt16(off64_t offset, uint16_t *x);

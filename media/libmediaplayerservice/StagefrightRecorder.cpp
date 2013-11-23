@@ -20,6 +20,11 @@
 
 #include "StagefrightRecorder.h"
 
+#ifdef ACT_AUDIO
+#include "ActAudioEncoder.h"
+#include <media/stagefright/ActAudioWriter.h>
+#endif
+
 #include <binder/IPCThreadState.h>
 #include <binder/IServiceManager.h>
 
@@ -778,6 +783,14 @@ status_t StagefrightRecorder::start() {
             status = startMPEG2TSRecording();
             break;
 
+#ifdef ACT_AUDIO
+        case OUTPUT_FORMAT_WAV:
+        case OUTPUT_FORMAT_MP3:
+        case OUTPUT_FORMAT_WMA:
+            status = startActAudioRecording();
+	    break;
+#endif
+
         default:
             ALOGE("Unsupported output file format: %d", mOutputFormat);
             status = UNKNOWN_ERROR;
@@ -838,6 +851,21 @@ sp<MediaSource> StagefrightRecorder::createAudioSource() {
             encMeta->setInt32(kKeyAACProfile, OMX_AUDIO_AACObjectELD);
             break;
 
+#ifdef ACT_CODECS
+        case AUDIO_ENCODER_PCM:
+            mime = "WAV";
+            break;
+        case AUDIO_ENCODER_ADPCM:
+            mime = "ADPCM";
+            break;
+        case AUDIO_ENCODER_MP3:
+            mime = "MP3";
+            break;
+        case AUDIO_ENCODER_WMA:
+            mime = "WMA";
+            break;
+#endif
+
         default:
             ALOGE("Unknown audio encoder: %d", mAudioEncoder);
             return NULL;
@@ -856,11 +884,25 @@ sp<MediaSource> StagefrightRecorder::createAudioSource() {
         encMeta->setInt32(kKeyTimeScale, mAudioTimeScale);
     }
 
+/* #ifdef ACT_CODECS
+    if(mAudioEncoder < AUDIO_ENCODER_PCM)    {
+#endif */
     OMXClient client;
     CHECK_EQ(client.connect(), (status_t)OK);
     sp<MediaSource> audioEncoder =
         OMXCodec::Create(client.interface(), encMeta,
                          true /* createEncoder */, audioSource);
+#ifdef ACT_AUDIO
+    // If encoder could not be created (as in PCM), then
+    // use ActAudioEncoder as the MediaSource.
+    if (audioEncoder == NULL && AUDIO_ENCODER_PCM) {
+
+    //ALOGE("===cz======createAudioSource google done");
+    //} else {
+    audioEncoder = new ActAudioEncoder(audioSource, encMeta);
+    ALOGE("createAudioSource actions done");
+    }
+#endif
     mAudioSourceNode = audioSource;
 
     return audioEncoder;
@@ -1037,6 +1079,25 @@ status_t StagefrightRecorder::startMPEG2TSRecording() {
 
     return mWriter->start();
 }
+
+#ifdef ACT_AUDIO
+status_t StagefrightRecorder::startActAudioRecording() {
+    sp<MediaSource> audioEncoder = createAudioSource();
+    if (audioEncoder == NULL) {
+        return UNKNOWN_ERROR;
+    }
+    mWriter = new ActAudioWriter(dup(mOutputFd));
+    mWriter->addSource(audioEncoder);
+    if (mMaxFileDurationUs != 0) {
+        mWriter->setMaxFileDuration(mMaxFileDurationUs);
+    }
+    if (mMaxFileSizeBytes != 0) {
+        mWriter->setMaxFileSize(mMaxFileSizeBytes);
+    }
+    mWriter->setListener(mListener);
+    return mWriter->start();
+}
+#endif
 
 void StagefrightRecorder::clipVideoFrameRate() {
     ALOGV("clipVideoFrameRate: encoder %d", mVideoEncoder);
@@ -1320,17 +1381,45 @@ status_t StagefrightRecorder::setupCameraSource(
             return BAD_VALUE;
         }
 
+#ifdef ACT_AUDIO
+    if(mVideoEncoder == VIDEO_ENCODER_H264) {
+#endif
         mCameraSourceTimeLapse = CameraSourceTimeLapse::CreateFromCamera(
                 mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
                 videoSize, mFrameRate, mPreviewSurface,
                 mTimeBetweenTimeLapseFrameCaptureUs);
+
+#ifdef ACT_AUDIO
+    } else {
+        mCameraSourceTimeLapse = CameraSourceTimeLapse::CreateFromCamera(
+                mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
+                videoSize, (mFrameRate|0x80000000), mPreviewSurface,
+                mTimeBetweenTimeLapseFrameCaptureUs);
+    		}
+#endif
+
         *cameraSource = mCameraSourceTimeLapse;
     } else {
+
+#ifdef ACT_AUDIO
+    if(mVideoEncoder == VIDEO_ENCODER_H264) {
+#endif
         *cameraSource = CameraSource::CreateFromCamera(
                 mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
                 videoSize, mFrameRate,
                 mPreviewSurface, true /*storeMetaDataInVideoBuffers*/);
     }
+
+#ifdef ACT_AUDIO
+    else {
+        *cameraSource = CameraSource::CreateFromCamera(
+		mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
+                videoSize, mFrameRate,
+		mPreviewSurface, false /*storeMetaDataInVideoBuffers*/);
+    	}
+    }
+#endif
+
     mCamera.clear();
     mCameraProxy.clear();
     if (*cameraSource == NULL) {
@@ -1399,6 +1488,23 @@ status_t StagefrightRecorder::setupVideoEncoder(
     CHECK(meta->findInt32(kKeySliceHeight, &sliceHeight));
     CHECK(meta->findInt32(kKeyColorFormat, &colorFormat));
 
+#ifdef ACT_AUDIO
+    {
+	int frameWidthActual = 0;
+	int frameHeightActual = 0;
+	bool ret = meta->findInt32('pwdt', &frameWidthActual);
+	ret = ret && meta->findInt32('phgt', &frameHeightActual);
+	if (ret) {
+	    enc_meta->setInt32('pwdt', frameWidthActual);
+	    enc_meta->setInt32('phgt', frameHeightActual);
+	}
+    }
+    enc_meta->setInt32('ctlp', 0);
+    if(mCaptureTimeLapse){
+    	enc_meta->setInt32('ctlp', 1);
+    }
+#endif
+
     enc_meta->setInt32(kKeyWidth, width);
     enc_meta->setInt32(kKeyHeight, height);
     enc_meta->setInt32(kKeyIFramesInterval, mIFramesIntervalSec);
@@ -1419,7 +1525,16 @@ status_t StagefrightRecorder::setupVideoEncoder(
     CHECK_EQ(client.connect(), (status_t)OK);
 
     uint32_t encoder_flags = 0;
+
+#ifdef ACT_AUDIO
+    encoder_flags |= OMXCodec::kOnlySubmitOneInputBufferAtOneTime;
+    ALOGE("mIsMetaDataStoredInVideoBuffers %d",mIsMetaDataStoredInVideoBuffers);
     if (mIsMetaDataStoredInVideoBuffers) {
+        encoder_flags |= OMXCodec::kHardwareCodecsOnly;
+#else
+    if (mIsMetaDataStoredInVideoBuffers) {
+#endif
+
         encoder_flags |= OMXCodec::kStoreMetaDataInVideoBuffers;
     }
 
@@ -1460,6 +1575,12 @@ status_t StagefrightRecorder::setupAudioEncoder(const sp<MediaWriter>& writer) {
         case AUDIO_ENCODER_AAC:
         case AUDIO_ENCODER_HE_AAC:
         case AUDIO_ENCODER_AAC_ELD:
+#ifdef ACT_AUDIO
+        case AUDIO_ENCODER_PCM:
+        case AUDIO_ENCODER_ADPCM:
+        case AUDIO_ENCODER_MP3:
+        case AUDIO_ENCODER_WMA:
+#endif
             break;
 
         default:

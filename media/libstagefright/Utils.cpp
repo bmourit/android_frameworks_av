@@ -33,6 +33,10 @@
 #include <media/stagefright/Utils.h>
 #include <media/AudioParameter.h>
 
+#ifdef ACT_AUDIO
+#include <media/stagefright/MediaDefs.h>
+#endif
+
 namespace android {
 
 uint16_t U16_AT(const uint8_t *ptr) {
@@ -82,6 +86,27 @@ status_t convertMetaDataToMessage(
     if (meta->findInt64(kKeyDuration, &durationUs)) {
         msg->setInt64("durationUs", durationUs);
     }
+#ifdef ACT_AUDIO
+    int actions_audio_flag=0;
+    actions_audio_flag=(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_MP3, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_AAC, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_WMASTD, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_WMALSL, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_WMAPRO, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_COOK, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_PCM, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_OGG, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_DTS, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_AC3, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_APE, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_ACELP, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_MPC, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_AIFF, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_AMR, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_SAMPLE, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_ALAC, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_AWB, mime));
+#endif
 
     int32_t isSync;
     if (meta->findInt32(kKeyIsSyncFrame, &isSync) && isSync != 0) {
@@ -217,6 +242,9 @@ status_t convertMetaDataToMessage(
         buffer->meta()->setInt64("timeUs", 0);
         msg->setBuffer("csd-1", buffer);
     } else if (meta->findData(kKeyESDS, &type, &data, &size)) {
+#ifdef ACT_AUDIO
+	if(actions_audio_flag == 0) {
+#endif
         ESDS esds((const char *)data, size);
         CHECK_EQ(esds.InitCheck(), (status_t)OK);
 
@@ -233,6 +261,23 @@ status_t convertMetaDataToMessage(
         buffer->meta()->setInt32("csd", true);
         buffer->meta()->setInt64("timeUs", 0);
         msg->setBuffer("csd-0", buffer);
+#ifdef ACT_AUDIO
+        }
+#if 0 // Web video uses actaudio
+	else {
+	    sp<ABuffer> buffer = new ABuffer(size);
+	    memcpy(buffer->data(), data,size);
+	        ALOGD("----addr %x",(const char *)data);
+	        ALOGD("----%x %x %x %x ",*(const char *)data,*(const char *)(data+1),*(const char *)(data+2),*(const char *)(data+3));
+	        ALOGD("----%x",*(const int *)data);
+	    int addr_tmp = (int)(*(const int *)data);
+	        ALOGD("----%x %x %x",*(int *)addr_tmp,*(int *)(addr_tmp+4),*(int *)(addr_tmp+8));
+            buffer->meta()->setInt32("csd", true);
+            buffer->meta()->setInt64("timeUs", 0);
+            msg->setBuffer("csd-0", buffer);
+        }
+#endif
+#endif
     } else if (meta->findData(kKeyVorbisInfo, &type, &data, &size)) {
         sp<ABuffer> buffer = new ABuffer(size);
         memcpy(buffer->data(), data, size);

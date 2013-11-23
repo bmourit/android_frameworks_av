@@ -3,6 +3,10 @@ include $(CLEAR_VARS)
 
 include frameworks/av/media/libstagefright/codecs/common/Config.mk
 
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+    LOCAL_CFLAGS += -DACT_AUDIO
+endif
+
 LOCAL_SRC_FILES:=                         \
         ACodec.cpp                        \
         AACExtractor.cpp                  \
@@ -67,6 +71,8 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/external/tremolo \
         $(TOP)/external/openssl/include \
 
+LOCAL_CFLAGS += -fno-strict-aliasing
+
 LOCAL_SHARED_LIBRARIES := \
         libbinder \
         libcamera_client \
@@ -121,6 +127,35 @@ LOCAL_CFLAGS += -Wno-multichar
 LOCAL_MODULE:= libstagefright
 
 LOCAL_MODULE_TAGS := optional
+
+ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
+LOCAL_SRC_FILES += \
+    ActAudioExtractor.cpp             \
+    ActDataSource.cpp                 \
+    ActAudioDownMix.cpp               \
+    ActAudioDecoder.cpp               \
+    ActAudioEncoder.cpp               \
+    ActAudioWriter.cpp                \
+    ActVideoExtractor.cpp             \
+
+LOCAL_C_INCLUDES += \
+    $(call include-path-for, alsp) \
+    $(TOP)/frameworks/av/media/libstagefright/vendor/al_libc \
+    $(TOP)/frameworks/av/include/alsp/inc \
+    $(TOP)/hardware/libhardware/include/hardware \
+    $(TOP)/frameworks/av/media/libstagefright/vendor/mmminfo \
+    $(TOP)/frameworks/av/include/alsp/inc/common \
+
+LOCAL_STATIC_LIBRARIES += \
+    libmmminfo \
+    libid3parser \
+
+LOCAL_SHARED_LIBRARIES += \
+    libalc \
+
+LOCAL_CFLAGS += -DTURN_ON_MIDDLEWARE_FLAG
+endif
+
 
 include $(BUILD_SHARED_LIBRARY)
 

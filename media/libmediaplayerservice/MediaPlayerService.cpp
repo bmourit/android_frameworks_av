@@ -513,6 +513,10 @@ MediaPlayerService::Client::Client(
     mUID = uid;
     mRetransmitEndpointValid = false;
 
+#ifdef ACT_CODECS
+    mPlayerType = STAGEFRIGHT_PLAYER;
+#endif
+
 #if CALLBACK_ANTAGONIZER
     ALOGD("create Antagonizer");
     mAntagonizer = new Antagonizer(notify, this);
@@ -652,6 +656,13 @@ status_t MediaPlayerService::Client::setDataSource(
         return mStatus;
     } else {
         player_type playerType = MediaPlayerFactory::getPlayerType(this, url);
+
+#ifdef ACT_CODECS
+	if (playerType != NU_PLAYER) {
+	    playerType = (mPlayerType == NU_PLAYER) ? NU_PLAYER : playerType;
+	}
+#endif
+
         sp<MediaPlayerBase> p = setDataSource_pre(playerType);
         if (p == NULL) {
             return NO_INIT;
@@ -747,6 +758,15 @@ status_t MediaPlayerService::Client::setVideoSurfaceTexture(
         anw = new Surface(bufferProducer, true /* controlledByApp */);
         status_t err = native_window_api_connect(anw.get(),
                 NATIVE_WINDOW_API_MEDIA);
+
+#ifdef ACT_CODECS
+    if (err != OK) {
+        ALOGW("setVideoBufferProducer failed 1, retrying");
+	usleep(1*1000*1000);
+	err = native_window_api_connect(anw.get(),
+            NATIVE_WINDOW_API_MEDIA);
+    }
+#endif
 
         if (err != OK) {
             ALOGE("setVideoSurfaceTexture failed: %d", err);
@@ -1097,6 +1117,54 @@ void MediaPlayerService::Client::notify(
             client->mNextClient->mClient->notify(MEDIA_INFO, MEDIA_INFO_STARTED_AS_NEXT, 0, obj);
         }
     }
+#ifdef ACT_CODECS
+    if (msg==MEDIA_REDIRECT) {
+    	char * uri  = (char *)malloc(ext2);
+    	if (uri != NULL) {
+    		ALOGI("notify: malloc %d uri OK", ext2);
+	    	memset(uri, 0, ext2);
+	    	strncpy(uri, (char *)ext1, ext2);
+    	} else {
+    		ALOGE("notify: malloc new uri failed when redirect palyer");
+    	}
+    	
+		ALOGI("notify: New Url  len: %d uri: %s", ext2, uri);
+		player_type playerType = MediaPlayerFactory::getPlayerType(client, uri);
+		if (client->mPlayer->playerType() == playerType) {
+			ALOGI("notify: processing redirect case and meet the same player type as before, and len: %d", ext2);
+			client->mClient->notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, ERROR_IO, obj);
+		} else { 	
+			client->setDataSource(uri, NULL);
+			client->prepareAsync();
+		} 
+
+		if (uri) {
+			free(uri);
+			uri = NULL;
+			ALOGI("notify: free uri OK");
+		}
+	} else if (msg == MEDIA_REDIRECT_NUPLAYER) {
+		char * uri  = (char *)malloc(ext2);
+		if (uri != NULL) {
+			ALOGI("notify: malloc %d uri OK", ext2);
+			memset(uri, 0, ext2);
+			strncpy(uri, (char *)ext1, ext2);
+		}else {
+			ALOGE("notify: malloc new uri failed when redirect palyer");
+		}
+    	
+		ALOGI("notify: New Url  len: %d uri: %s client->mPlayerType: %d", ext2, uri, client->mPlayerType);
+		client->mPlayerType = NU_PLAYER;
+		client->setDataSource(uri, NULL);
+		client->prepareAsync();
+
+		if (uri) {
+			free(uri);
+			uri = NULL;
+			ALOGI("notify: free uri OK");
+		}
+	} else {
+#endif
 
     if (MEDIA_INFO == msg &&
         MEDIA_INFO_METADATA_UPDATE == ext1) {
@@ -1114,6 +1182,9 @@ void MediaPlayerService::Client::notify(
     if (c != NULL) {
         ALOGV("[%d] notify (%p, %d, %d, %d)", client->mConnId, cookie, msg, ext1, ext2);
         c->notify(msg, ext1, ext2, obj);
+#ifdef ACT_CODECS
+        }
+#endif
     }
 }
 

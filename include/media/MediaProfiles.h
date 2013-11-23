@@ -456,6 +456,10 @@ private:
     static VideoEncoderCap* createDefaultH263VideoEncoderCap();
     static VideoEncoderCap* createDefaultM4vVideoEncoderCap();
     static AudioEncoderCap* createDefaultAmrNBEncoderCap();
+#ifdef ACT_AUDIO
+    static AudioEncoderCap* createDefaultAACEncoderCap();
+    static AudioEncoderCap* createDefaultMP3EncoderCap();
+#endif
 
     static int findTagForName(const NameToTagMap *map, size_t nMappings, const char *name);
 

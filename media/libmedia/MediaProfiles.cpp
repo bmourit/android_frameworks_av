@@ -800,6 +800,12 @@ MediaProfiles::createDefaultCamcorderProfiles(MediaProfiles *profiles)
 MediaProfiles::createDefaultAudioEncoders(MediaProfiles *profiles)
 {
     profiles->mAudioEncoders.add(createDefaultAmrNBEncoderCap());
+
+#ifdef ACT_CODECS
+    profiles->mAudioEncoders.add(createDefaultAACEncoderCap());
+    profiles->mAudioEncoders.add(createDefaultMP3EncoderCap());
+#endif
+
 }
 
 /*static*/ void
@@ -833,6 +839,23 @@ MediaProfiles::createDefaultAmrNBEncoderCap()
     return new MediaProfiles::AudioEncoderCap(
         AUDIO_ENCODER_AMR_NB, 5525, 12200, 8000, 8000, 1, 1);
 }
+
+#ifdef ACT_CODECS
+/*static*/ MediaProfiles::AudioEncoderCap*
+MediaProfiles::createDefaultAACEncoderCap()
+{    
+    //ALOGE("===cz========createDefaultAACEncoderCap");
+    return new MediaProfiles::AudioEncoderCap(
+        AUDIO_ENCODER_AAC, 5525, 73200, 8000, 48000, 1, 2);
+}
+/*static*/ MediaProfiles::AudioEncoderCap*
+MediaProfiles::createDefaultMP3EncoderCap()
+{   
+    //ALOGE("===cz========createDefaultMP3EncoderCap");
+    return new MediaProfiles::AudioEncoderCap(
+        AUDIO_ENCODER_MP3, 5525, 73200, 8000, 48000, 1, 2);
+}
+#endif
 
 /*static*/ void
 MediaProfiles::createDefaultImageEncodingQualityLevels(MediaProfiles *profiles)
