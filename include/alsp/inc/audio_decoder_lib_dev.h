@@ -10,7 +10,7 @@
 *******************************************************************************/
 /*!
  * \file     audio_decoder_lib_dev.h
- * \brief    ÒôÆµ½âÂë¿âËùĞèÒªµÄÍ·ÎÄ¼ş
+ * \brief    Audio decoding library header files
  * \author   kkli
  * \version 1.0
  * \date  2008/09/18
@@ -28,63 +28,63 @@ typedef enum
 } audiodec_ex_ops_cmd_t;
 /*!
  * \brief
- *      ¶¨ÒåÒôÆµ½âÂë²å¼ş·µ»ØµÄÀàĞÍ
+ * Type definition audio decoding plug-in returns
  */
 typedef enum
 {
-    /*! Ò»°ãÎ´Öª´íÎó */
+    /*! unknown error */
     AD_RET_UNEXPECTED = -3,
-    /*! ÄÚ´æ¿Õ¼ä²»¹» */
+    /*! Insufficient memory space */
     AD_RET_OUTOFMEMORY,
-    /*! ¸ñÊ½²»Ö§³Ö£¬²»ÄÜ¼ÌĞø½âÂë */
+    /*! Format is not supported, can't continue decoding */
     AD_RET_UNSUPPORTED,
-    /*! Õı³£ */
+    /*! Normal */
     AD_RET_OK,
-    /*! ÊäÈëÊı¾İ²»¹» */
+    /*! Insufficient input data */
     AD_RET_DATAUNDERFLOW,
 } audiodec_ret_t;
 /*!
  * \brief
- *      ¶¨ÒåÒôÆµ½âÂë²å¼şĞèÌá¹©µÄÊı¾İ½á¹¹
+ * Structure definitions required by the audio decoding plug-in
  */
 typedef struct
 {
-    /*! ²å¼ş¿âºó×º£¬´óĞ´£¬Àı£º"COOK"£¬²Î¿¼Í·ÎÄ¼ş¶¨Òå */
+    /*! Plug-in library suffix, uppercase, for example: \ "COOK \", a reference header files define */
     char extension[MAX_EXT_SIZE];
 
     /*!
      * \par  Description:
-     *	  ´ò¿ª²å¼ş
-     * \param[in]   init_buf ³õÊ¼»¯ĞÅÏ¢£¬ÓÉparserºÍ½âÂë¿â×ÔĞĞÔ¼¶¨Êı¾İ½á¹¹
-     * \return      ²å¼ş¾ä±ú
-     * \retval           others sucess
-     * \retval           NULL failed
+     * Open the plug-in
+     * \ \ Param [in] init_buf initialization information, determined by the parser and decoder library data structure itself
+     * \ \ Return plug-in handles
+     * \ \ Retval others sucess
+     * \ \ Retval NULL failed
      */
     void *(*open)(void *init_buf);
     /*!
-     * \par  Description:
-     *	  ½âÂëÒ»Ö¡Êı¾İ
-     * \param[in]   handle ²å¼ş¾ä±ú
-     * \param[in]   input ÊäÈëÊı¾İµÄÆğÊ¼µØÖ·
-     * \param[in]   input_bytes ÊäÈëÊı¾İµÄ³¤¶È
-     * \param[out]  aout ½âÂëÊä³ö£¬½á¹¹²Î¿¼audiout_pcm_t
-     * \param[out]  bytes_used ½âÂëµ±Ç°Ö¡ÓÃµÄ×Ö½ÚÊı
-     * \return      the result (audiodec_ret_t)
+     * \\ Par Description:
+     * Decoded data
+     * \\ Param [in] handle plug-in handles
+     * \\ Param [in] input start address of the input data
+     * \\ Param [in] length input_bytes input data
+     * \\ Param [out] aout decoded output, structure reference audiout_pcm_t
+     * \\ Param [out] bytes_used decodes the number of bytes used in the current frame
+     * \\ Return the result (audiodec_ret_t)
      */
     int (*frame_decode)(void *handle, const char *input, const int input_bytes, audiout_pcm_t *aout, int *bytes_used);
     /*!
-     * \par  Description:
-     *	  À©Õ¹ÃüÁî£¬²»ĞèÒª´Ë¹¦ÄÜµÄÊµÏÖÎª¿Õ¼´¿É
-     * \param[in]   handle ²å¼ş¾ä±ú
-     * \param[in]   cmd ÃüÁî×Ö
-     * \param[in]   args ²ÎÊı
-     * \return      the result (audiodec_ret_t)
-     */
+     * \\ Par Description:
+     * Extended commands do not need this feature can be implemented as empty
+     * \\ Param [in] handle plug-in handles
+     * \\ Param [in] cmd command word
+     * \\ Param [in] args parameter
+     * \\ Return the result (audiodec_ret_t)
+     */
     int (*ex_ops)(void *handle, int cmd, int args);
 	/*!
      * \par  Description:
-     *	  ¹Ø±Õ²å¼ş
-     * \param[in]   handle ²å¼ş¾ä±ú
+     *	  Close the plug-in
+     * \param[in]   handle plug-in handles
      */
     void (*close)(void *handle);
 } audiodec_plugin_t;

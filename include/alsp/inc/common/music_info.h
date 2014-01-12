@@ -10,7 +10,7 @@
 *******************************************************************************/
 /*!
  * \file     music_info.h
- * \brief    定义parser输出的歌曲信息结构
+ * \brief    Defines the stucture of the song info parser output
  * \author   kkli
  * \version 1.0
  * \date  2008/09/05
@@ -20,23 +20,23 @@
 
 /*!
  * \brief  
- *      parser插件库返回的信息结构
+ *      Returns the parser plug-in library info structure
  */
 typedef struct
 {
-    /*! 解码库的后缀，大写，例："COOK" */
+    /*! codec library suffix, in uppercase. For example: "COOK" */
     char extension[8];
-    /*! 最大的chunk大小，单位byte */
+    /*! Large chunk size in bytes */
     int max_chunksize;
-    /*! 总时间，单位seconds */
+    /*! Total time in seconds */
     int total_time;
-    /*! 平均比特率，单位kbps */
+    /*! Average bitrate kbps */
     int avg_bitrate;
-	/*! 采样率，单位hz */
+	/*! Sampling rate in Hz */
     int sample_rate;
-    /*! 声道数 */
+    /*! Number of channels */
     int channels;
-    /*! 打开音频解码插件所需的输入参数，结构由特定格式约定 */
+    /*! Open the audio decoder plug-in input parameters for the format */
     void *buf;
 } music_info_t;
 

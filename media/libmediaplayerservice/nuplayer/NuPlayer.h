@@ -153,7 +153,18 @@ private:
     int64_t mNumFramesTotal, mNumFramesDropped;
 
     int32_t mVideoScalingMode;
-
+#ifdef ACT_HARDWARE
+    int64_t mMaxSegDuration;
+    int64_t mLastSegPosition;
+    int64_t mCurrentPosition;
+    int64_t mLastPositionUs;
+    int64_t mDuration;
+    int64_t mSeekingTime;
+    bool mSeekFlag;
+    bool mSeekIFrmFlag;
+    bool mSeekPostionFlag;
+    bool mChangingVideoBufferProducer;
+#endif
     bool mStarted;
 
     status_t instantiateDecoder(bool audio, sp<Decoder> *decoder);

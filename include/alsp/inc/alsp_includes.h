@@ -1,9 +1,7 @@
 #ifndef __ALSP_INCLUDES_H__
 #define __ALSP_INCLUDES_H__
 
-// 系统相关的外部头文件, 主要用于中间件等系统相关模块
-
-
+// Relevant external system header files, mainly for middleware and other system-related modules
 
 
 #if defined(_OS_UC_)
@@ -44,8 +42,8 @@
 #include <semaphore.h>
 #include "actions_reg_gl5005.h"
 #include "dma_mem.h"
-#include "fb_drv.h"                /////////atv600x framebuffer的头文件
-#include "asoc_ioctl.h"            /////////该方案的ioctl命令字定义
+#include "fb_drv.h"                /////////atv600x framebuffer header file
+#include "asoc_ioctl.h"            /////////ioctl command byte defines
 
 #endif
 

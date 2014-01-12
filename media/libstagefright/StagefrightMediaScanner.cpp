@@ -38,11 +38,24 @@ StagefrightMediaScanner::~StagefrightMediaScanner() {}
 
 static bool FileHasAcceptableExtension(const char *extension) {
     static const char *kValidExtensions[] = {
-        ".mp3", ".mp4", ".m4a", ".3gp", ".3gpp", ".3g2", ".3gpp2",
-        ".mpeg", ".ogg", ".mid", ".smf", ".imy", ".wma", ".aac",
-        ".wav", ".amr", ".midi", ".xmf", ".rtttl", ".rtx", ".ota",
-        ".mkv", ".mka", ".webm", ".ts", ".fl", ".flac", ".mxmf",
-        ".avi", ".mpeg", ".mpg", ".awb", ".mpga"
+        //by 3307 2012.10.23
+        //audio
+        ".mp3",  ".mp2",  ".mp1", ".m4a", ".wav", ".amr", ".awb",
+        ".wma",  ".ogg",  ".oga", ".aac", ".mka", ".rm",  ".ram",
+        ".ra",   ".dts",  ".ac3", ".aa",  ".aax", ".flac",".ape", 
+        ".pcm",
+        ".mid",  ".midi", ".xmf", ".rtttl",".smf", ".imy",".rtx",
+        ".ota",  ".mxmf",
+        //video
+        ".mpeg", ".mpg",  ".mp4", ".m4v",  ".mov", ".3gp", ".3gpp", 
+        ".3g2",  ".3gpp2",".mkv", ".webm", ".avi", ".ts",  ".m2ts", 
+        ".mts",  ".tp",   ".f4v", ".flv",  ".rmvb",".rm",  ".dat", 
+        ".vob",  "evo",   ".wmv", ".asf",  ".divx", ".ogg", "ogm",
+		".mpga",
+        //images
+        
+        //others
+        ".fl", ".ec3",        
     };
     static const size_t kNumValidExtensions =
         sizeof(kValidExtensions) / sizeof(kValidExtensions[0]);
@@ -107,7 +120,7 @@ static MediaScanResult HandleMIDI(
 MediaScanResult StagefrightMediaScanner::processFile(
         const char *path, const char *mimeType,
         MediaScannerClient &client) {
-    ALOGV("processFile '%s'.", path);
+    ALOGD("processFile '%s'.", path);
 
     client.setLocale(locale());
     client.beginFile();

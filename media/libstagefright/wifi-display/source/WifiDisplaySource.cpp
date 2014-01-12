@@ -115,7 +115,7 @@ status_t WifiDisplaySource::stop() {
     sp<AMessage> response;
     return PostAndAwaitResponse(msg, &response);
 }
-
+#if 1
 status_t WifiDisplaySource::pause() {
     sp<AMessage> msg = new AMessage(kWhatPause, id());
 
@@ -129,6 +129,7 @@ status_t WifiDisplaySource::resume() {
     sp<AMessage> response;
     return PostAndAwaitResponse(msg, &response);
 }
+#endif
 
 void WifiDisplaySource::onMessageReceived(const sp<AMessage> &msg) {
     switch (msg->what()) {
@@ -585,7 +586,7 @@ status_t WifiDisplaySource::sendM1(int32_t sessionID) {
 
 status_t WifiDisplaySource::sendM3(int32_t sessionID) {
     AString body =
-        "wfd_content_protection\r\n"
+        //"wfd_content_protection\r\n"
         "wfd_video_formats\r\n"
         "wfd_audio_codecs\r\n"
         "wfd_client_rtp_ports\r\n";
@@ -931,7 +932,11 @@ status_t WifiDisplaySource::onReceiveM3Response(
     }
 
     mUsingHDCP = false;
-    if (!params->findParameter("wfd_content_protection", &value)) {
+    char val[PROPERTY_VALUE_MAX];
+    if (property_get("persist.sys.wfd.nohdcp", val, NULL)
+            && !strcmp("1", val)) {
+        ALOGI("Content protection has been disabled for WFD sinks");
+    } else if (!params->findParameter("wfd_content_protection", &value)) {
         ALOGI("Sink doesn't appear to support content protection.");
     } else if (value == "none") {
         ALOGI("Sink does not support content protection.");

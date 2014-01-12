@@ -10,7 +10,7 @@
 ********************************************************************************/
 /*!
 * \file     format_dev.h
-* \brief    提供对格式进行判断
+* \brief    
 * \author   kkli
 * \version 1.0
 * \date  2008/08/26
@@ -24,12 +24,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*!                    
+/*                  
  * \par  Description:
- *	  获取文件后缀
- * \param[in]   storage_io_t 文件操作的接口
- * \param[out]  后缀名字符串
- * \return      是否能找到有效的后缀名
+ *	  
+ * \param[in]   storage_io_t 
+ * \param[out]  
+ * \return      
  * \retval           0 sucess 
  * \retval           -1 failed     
  */   

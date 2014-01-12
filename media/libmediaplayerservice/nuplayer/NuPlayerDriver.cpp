@@ -41,7 +41,13 @@ NuPlayerDriver::NuPlayerDriver()
       mLooper(new ALooper),
       mPlayerFlags(0),
       mAtEOS(false),
+#ifdef ACT_HARDWARE
+      mStartupSeekTimeUs(-1),
+      mLastPositionUpdateUs(0),
+      mBufferingFlag(false) {
+#else
       mStartupSeekTimeUs(-1) {
+#endif
     mLooper->setName("NuPlayerDriver Looper");
 
     mLooper->start(
@@ -309,6 +315,14 @@ status_t NuPlayerDriver::getCurrentPosition(int *msec) {
     } else {
         *msec = (mPositionUs + 500ll) / 1000;
     }
+#ifdef ACT_HARDWARE
+    int64_t nowUs = ALooper::GetNowUs();
+    if (mPositionUs > 0 && mState == STATE_RUNNING && nowUs - mLastPositionUpdateUs > 5000 * 1000 && !mBufferingFlag) {
+        mBufferingFlag = true;
+	notifyListener(MEDIA_INFO, MEDIA_INFO_BUFFERING_START);
+	ALOGW("send MEDIA_INFO_BUFFERING_START");
+    }
+#endif
 
     return OK;
 }
@@ -480,6 +494,15 @@ void NuPlayerDriver::notifyDuration(int64_t durationUs) {
 void NuPlayerDriver::notifyPosition(int64_t positionUs) {
     Mutex::Autolock autoLock(mLock);
     mPositionUs = positionUs;
+#ifdef ACT_HARDWARE
+    int64_t nowUs = ALooper::GetNowUs();
+    if (nowUs - mLastPositionUpdateUs > 5000 * 1000 && mBufferingFlag) {
+        notifyListener(MEDIA_INFO, MEDIA_INFO_BUFFERING_END);
+        mBufferingFlag = false;
+        ALOGW("send MEDIA_INFO_BUFFERING_END");
+    }
+    mLastPositionUpdateUs = ALooper::GetNowUs();
+#endif
 }
 
 void NuPlayerDriver::notifySeekComplete() {

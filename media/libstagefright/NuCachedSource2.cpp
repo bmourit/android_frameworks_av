@@ -297,6 +297,11 @@ void NuCachedSource2::fetchInternal() {
             mSource->reconnectAtOffset(mCacheOffset + mCache->totalSize());
 
         Mutex::Autolock autoLock(mLock);
+        if (err == ERROR_READ_TIME_OUT_SP) {
+            ALOGW("time out:mNumRetriesLeft %d",mNumRetriesLeft);
+            mNumRetriesLeft = mNumRetriesLeft > 1 ? 1 : 0;
+            return;
+        }
 
         if (err == ERROR_UNSUPPORTED || err == -EPIPE) {
             // These are errors that are not likely to go away even if we
@@ -324,6 +329,10 @@ void NuCachedSource2::fetchInternal() {
             // These are errors that are not likely to go away even if we
             // retry, i.e. the server doesn't support range requests or similar.
             mNumRetriesLeft = 0;
+        }
+        if (n == ERROR_READ_TIME_OUT_SP) {
+            ALOGW("time out:mNumRetriesLeft %d",mNumRetriesLeft);
+            mNumRetriesLeft = mNumRetriesLeft > 1 ? 1 : 0;
         }
 
         ALOGE("source returned error %ld, %d retries left", n, mNumRetriesLeft);

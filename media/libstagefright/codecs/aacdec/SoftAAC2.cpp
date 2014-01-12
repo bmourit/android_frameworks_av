@@ -403,8 +403,11 @@ void SoftAAC2::onQueueFilled(OMX_U32 portIndex) {
         }
 
         if (inHeader->nOffset == 0) {
-            mAnchorTimeUs = inHeader->nTimeStamp;
-            mNumSamplesOutput = 0;
+            if(inHeader->nTimeStamp!=0) //cz_20121012 bug fix tudou video
+            {
+                mAnchorTimeUs = inHeader->nTimeStamp;
+                mNumSamplesOutput = 0;
+            }
         }
 
         size_t adtsHeaderSize = 0;

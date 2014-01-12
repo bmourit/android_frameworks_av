@@ -10,7 +10,7 @@
 ********************************************************************************/
 /*!
 * \file     extdef.h
-* \brief    提供后缀名所对应的字符串
+* \brief    Provides the corresponding suffix string
 * \author   kkli
 * \version 1.0
 * \date  2008/08/26
@@ -18,7 +18,7 @@
 #ifndef __EXTDEF_H__
 #define __EXTDEF_H__
 
-/* 最大的后缀名长度 */
+/* Maximum length of extention */
 #define MAX_EXT_SIZE            8
 
 /* music related parser */

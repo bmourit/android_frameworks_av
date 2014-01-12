@@ -38,7 +38,7 @@ typedef unsigned char uint8_t;
 
 /*!
  * \brief  
- *      文件系统相关操作声明，仅适用于debug
+ *      File system related operations statement applies only to debug
  */
 typedef int FILE;
 
@@ -60,7 +60,7 @@ void *memcmp(const void *, const void *, int);
 void *memmove(void *, const void *, int);
 /*!
  * \brief  
- *      字符串相关操作声明
+ *      String statement related operations
  */
 char *strcpy(char *, const char *);
 char *strncpy(char *, const char *, int);
@@ -75,7 +75,7 @@ int sscanf(const char *, const char *, ... );
 int atoi(const char *);
 /*!
  * \brief  
- *      打印操作声明
+ *      Statement printing operation
  */
 int printf(const char *, ...); 
 

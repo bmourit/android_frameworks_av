@@ -224,6 +224,7 @@ int AudioMixer::getTrackName(audio_channel_mask_t channelMask, int sessionId)
         ALOGE("AudioMixer::getTrackName(0x%x) failed, error preparing track for downmix",
                 channelMask);
     }
+    ALOGE("mTrackNames:%04x", mTrackNames);
     return -1;
 }
 

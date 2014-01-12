@@ -51,6 +51,7 @@ AudioPlayer::AudioPlayer(
       mFinalStatus(OK),
       mSeekTimeUs(0),
       mStarted(false),
+      mPause(false),
       mIsFirstBuffer(false),
       mFirstBufferResult(OK),
       mFirstBuffer(NULL),
@@ -247,13 +248,14 @@ status_t AudioPlayer::start(bool sourceAlreadyStarted) {
     mStarted = true;
     mPlaying = true;
     mPinnedTimeUs = -1ll;
+    mPause = false;
 
     return OK;
 }
 
 void AudioPlayer::pause(bool playPendingSamples) {
     CHECK(mStarted);
-
+    mPause = true;
     if (playPendingSamples) {
         if (mAudioSink.get() != NULL) {
             mAudioSink->stop();
@@ -278,6 +280,7 @@ void AudioPlayer::pause(bool playPendingSamples) {
 
 status_t AudioPlayer::resume() {
     CHECK(mStarted);
+    mPause = false;
     status_t err;
 
     if (mAudioSink.get() != NULL) {
@@ -367,6 +370,7 @@ void AudioPlayer::reset() {
     mReachedEOS = false;
     mFinalStatus = OK;
     mStarted = false;
+    mPause = false;
     mPlaying = false;
     mStartPosUs = 0;
 }
@@ -757,6 +761,9 @@ int64_t AudioPlayer::getMediaTimeUs() {
         return mSeekTimeUs;
     }
 
+    if(mPause == true) {
+        return mPositionTimeMediaUs;
+    }
     int64_t realTimeOffset = getRealTimeUsLocked() - mPositionTimeRealUs;
     if (realTimeOffset < 0) {
         realTimeOffset = 0;

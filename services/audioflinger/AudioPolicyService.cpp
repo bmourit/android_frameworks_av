@@ -418,12 +418,15 @@ status_t AudioPolicyService::setStreamVolumeIndex(audio_stream_type_t stream,
         return BAD_VALUE;
     }
     Mutex::Autolock _l(mLock);
+#ifndef ICS_AUDIO_BLOB
     if (mpAudioPolicy->set_stream_volume_index_for_device) {
         return mpAudioPolicy->set_stream_volume_index_for_device(mpAudioPolicy,
                                                                 stream,
                                                                 index,
                                                                 device);
-    } else {
+    } else 
+#endif
+    {
         return mpAudioPolicy->set_stream_volume_index(mpAudioPolicy, stream, index);
     }
 }
@@ -439,12 +442,15 @@ status_t AudioPolicyService::getStreamVolumeIndex(audio_stream_type_t stream,
         return BAD_VALUE;
     }
     Mutex::Autolock _l(mLock);
+#ifndef ICS_AUDIO_BLOB
     if (mpAudioPolicy->get_stream_volume_index_for_device) {
         return mpAudioPolicy->get_stream_volume_index_for_device(mpAudioPolicy,
                                                                 stream,
                                                                 index,
                                                                 device);
-    } else {
+    } else 
+#endif
+    {
         return mpAudioPolicy->get_stream_volume_index(mpAudioPolicy, stream, index);
     }
 }
@@ -1137,6 +1143,10 @@ int AudioPolicyService::setVoiceVolume(float volume, int delayMs)
 
 bool AudioPolicyService::isOffloadSupported(const audio_offload_info_t& info)
 {
+#ifdef HAVE_PRE_KITKAT_AUDIO_BLOB
+    return false;
+#endif
+
     if (mpAudioPolicy == NULL) {
         ALOGV("mpAudioPolicy == NULL");
         return false;

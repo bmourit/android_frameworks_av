@@ -113,6 +113,12 @@ enum {
     kKeyTrackTimeStatus   = 'tktm',  // int64_t
 
     kKeyRealTimeRecording = 'rtrc',  // bool (int32_t)
+
+#ifdef ACT_HARDWARE
+// For some code that still looks for this
+    kKeyNotRealTime	 = 'ntrt', // bool (int32_t)
+#endif
+
     kKeyNumBuffers        = 'nbbf',  // int32_t
 
     // Ogg files can be tagged to be automatically looping...

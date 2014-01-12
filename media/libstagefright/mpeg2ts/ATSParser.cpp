@@ -438,9 +438,12 @@ int64_t ATSParser::Program::convertPTSToTimestamp(uint64_t PTS) {
         if (!mFirstPTSValid) {
             mFirstPTSValid = true;
             mFirstPTS = PTS;
-            PTS = 0;
+            PTS = 0;            
+            ALOGD("--0mFirstPTS %lld",mFirstPTS);
         } else if (PTS < mFirstPTS) {
+            mFirstPTS = PTS;
             PTS = 0;
+            ALOGD("--1mFirstPTS %lld",mFirstPTS);
         } else {
             PTS -= mFirstPTS;
         }
@@ -530,6 +533,7 @@ status_t ATSParser::Stream::parse(
         return OK;
     }
 
+#if 0
     if (mExpectedContinuityCounter >= 0
             && (unsigned)mExpectedContinuityCounter != continuity_counter) {
         ALOGI("discontinuity on stream pid 0x%04x", mElementaryPID);
@@ -538,7 +542,6 @@ status_t ATSParser::Stream::parse(
         mBuffer->setRange(0, 0);
         mExpectedContinuityCounter = -1;
 
-#if 0
         // Uncomment this if you'd rather see no corruption whatsoever on
         // screen and suspend updates until we come across another IDR frame.
 
@@ -546,12 +549,12 @@ status_t ATSParser::Stream::parse(
             ALOGI("clearing video queue");
             mQueue->clear(true /* clearFormat */);
         }
-#endif
 
         return OK;
     }
 
     mExpectedContinuityCounter = (continuity_counter + 1) & 0x0f;
+#endif
 
     if (payload_unit_start_indicator) {
         if (mPayloadStarted) {
@@ -870,7 +873,14 @@ void ATSParser::Stream::onPayloadData(
 
     int64_t timeUs = 0ll;  // no presentation timestamp available.
     if (PTS_DTS_flags == 2 || PTS_DTS_flags == 3) {
-        timeUs = mProgram->convertPTSToTimestamp(PTS);
+    	if(mStreamType == STREAMTYPE_H264 && DTS != 0)
+    	{
+	    	timeUs = mProgram->convertPTSToTimestamp(DTS);
+	    }
+    	else
+    	{
+	        timeUs = mProgram->convertPTSToTimestamp(PTS);
+	    }
     }
 
     status_t err = mQueue->appendData(data, size, timeUs);
@@ -1193,7 +1203,10 @@ status_t ATSParser::parseTS(ABitReader *br) {
     unsigned sync_byte = br->getBits(8);
     CHECK_EQ(sync_byte, 0x47u);
 
-    MY_LOGV("transport_error_indicator = %u", br->getBits(1));
+    if (br->getBits(1)) {  // transport_error_indicator
+        // silently ignore.
+        return OK;
+    }
 
     unsigned payload_unit_start_indicator = br->getBits(1);
     ALOGV("payload_unit_start_indicator = %u", payload_unit_start_indicator);

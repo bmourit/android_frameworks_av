@@ -155,7 +155,7 @@ private:
 	sp<MetaData> mMeta;
 
 	void *mLib_handle;
-	audiodec_plugin_t *mPlugin_info; /* 解码插件信息 */
+	audiodec_plugin_t *mPlugin_info;
 	void *mPlugin_handle;
 
 	downmix_state* mDownMix;

@@ -10,7 +10,7 @@
 *******************************************************************************/
 /*!
  * \file     audiout_pcm.h
- * \brief    定义解码输出的数据结构
+ * \brief    Decoder output data structure definition
  * \author   kkli
  * \version 1.0
  * \date  2008/09/05
@@ -20,22 +20,22 @@
 
 /*!
  * \brief  
- *      定义最大的输出声道数
+ *      Define the max num of output channels
  */
 #define MAX_CHANNEL     6
 /*!
  * \brief  
- *      音频解码插件帧解码的输出或音频输出模块的输入
+ *      Input audio decoding plug-frame decoded output or audio output module
  */
 typedef struct
 {
-    /*! pcm数据指针数组，包含各声道输出数据的起始地址 */
+    /*! PCM data pointer array the contains the starting addr of each channel output data */
     int pcm[MAX_CHANNEL];
-    /*! 当前输出包含的声道数 */
+    /*! Contains current number of channels output */
     int channels;
-    /*! 当前输出包含的样本数，只计单个声道 */
+    /*! Current num of sample output contains only a single channel count */
     int samples;
-    /*! 当前输出小数点的位数，整数取值0 */
+    /*! Current output of decimal digits, the integer value 0 */
     int frac_bits;
 } audiout_pcm_t;
 

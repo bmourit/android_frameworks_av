@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 include frameworks/av/media/libstagefright/codecs/common/Config.mk
 
 ifeq ($(TARGET_BOARD_PLATFORM),ATM702X)
-    LOCAL_CFLAGS += -DACT_AUDIO
+    LOCAL_CFLAGS += -DACT_AUDIO -DACT_HARDWARE
 endif
 
 LOCAL_SRC_FILES:=                         \
@@ -73,6 +73,27 @@ LOCAL_C_INCLUDES:= \
 
 LOCAL_CFLAGS += -fno-strict-aliasing
 
+ifneq ($(TI_CUSTOM_DOMX_PATH),)
+LOCAL_C_INCLUDES += $(TI_CUSTOM_DOMX_PATH)/omx_core/inc
+LOCAL_CPPFLAGS += -DUSE_TI_CUSTOM_DOMX
+else
+LOCAL_C_INCLUDES += $(TOP)/frameworks/native/include/media/openmax
+endif
+
+ifeq ($(BOARD_USES_STE_FMRADIO),true)
+LOCAL_SRC_FILES += \
+        FMRadioSource.cpp                 \
+        PCMExtractor.cpp
+endif
+
+ifeq ($(TARGET_QCOM_MEDIA_VARIANT),caf)
+LOCAL_C_INCLUDES += \
+        $(TOP)/hardware/qcom/media-caf/mm-core/inc
+else
+LOCAL_C_INCLUDES += \
+        $(TOP)/hardware/qcom/media/mm-core/inc
+endif
+
 LOCAL_SHARED_LIBRARIES := \
         libbinder \
         libcamera_client \
@@ -124,6 +145,16 @@ LOCAL_SHARED_LIBRARIES += \
 
 LOCAL_CFLAGS += -Wno-multichar
 
+ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT), true)
+LOCAL_CFLAGS += -DUSE_SAMSUNG_COLORFORMAT
+
+# Include native color format header path
+LOCAL_C_INCLUDES += \
+	$(TOP)/hardware/samsung/exynos4/hal/include \
+	$(TOP)/hardware/samsung/exynos4/include
+
+endif
+
 LOCAL_MODULE:= libstagefright
 
 LOCAL_MODULE_TAGS := optional
@@ -140,6 +171,7 @@ LOCAL_SRC_FILES += \
 
 LOCAL_C_INCLUDES += \
     $(call include-path-for, alsp) \
+    $(TOP)/frameworks/native/include/media/openmax \
     $(TOP)/frameworks/av/media/libstagefright/vendor/al_libc \
     $(TOP)/frameworks/av/include/alsp/inc \
     $(TOP)/hardware/libhardware/include/hardware \

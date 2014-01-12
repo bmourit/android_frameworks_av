@@ -45,7 +45,8 @@ const MediaProfiles::NameToTagMap MediaProfiles::sAudioEncoderNameMap[] = {
     {"amrwb",  AUDIO_ENCODER_AMR_WB},
     {"aac",    AUDIO_ENCODER_AAC},
     {"heaac",  AUDIO_ENCODER_HE_AAC},
-    {"aaceld", AUDIO_ENCODER_AAC_ELD}
+    {"aaceld", AUDIO_ENCODER_AAC_ELD},
+    {"mp3"  ,  AUDIO_ENCODER_MP3},
 };
 
 const MediaProfiles::NameToTagMap MediaProfiles::sFileFormatMap[] = {
@@ -70,6 +71,10 @@ const MediaProfiles::NameToTagMap MediaProfiles::sCamcorderQualityNameMap[] = {
     {"720p", CAMCORDER_QUALITY_720P},
     {"1080p", CAMCORDER_QUALITY_1080P},
     {"qvga", CAMCORDER_QUALITY_QVGA},
+    {"fwvga", CAMCORDER_QUALITY_FWVGA},
+    {"wvga", CAMCORDER_QUALITY_WVGA},
+    {"vga", CAMCORDER_QUALITY_VGA},
+    {"wqvga", CAMCORDER_QUALITY_WQVGA},
 
     {"timelapselow",  CAMCORDER_QUALITY_TIME_LAPSE_LOW},
     {"timelapsehigh", CAMCORDER_QUALITY_TIME_LAPSE_HIGH},
@@ -843,15 +848,14 @@ MediaProfiles::createDefaultAmrNBEncoderCap()
 #ifdef ACT_CODECS
 /*static*/ MediaProfiles::AudioEncoderCap*
 MediaProfiles::createDefaultAACEncoderCap()
-{    
-    //ALOGE("===cz========createDefaultAACEncoderCap");
+{
     return new MediaProfiles::AudioEncoderCap(
         AUDIO_ENCODER_AAC, 5525, 73200, 8000, 48000, 1, 2);
 }
+
 /*static*/ MediaProfiles::AudioEncoderCap*
 MediaProfiles::createDefaultMP3EncoderCap()
-{   
-    //ALOGE("===cz========createDefaultMP3EncoderCap");
+{
     return new MediaProfiles::AudioEncoderCap(
         AUDIO_ENCODER_MP3, 5525, 73200, 8000, 48000, 1, 2);
 }

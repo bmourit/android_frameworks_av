@@ -51,6 +51,7 @@ enum media_event_type {
     MEDIA_INFO              = 200,
     MEDIA_SUBTITLE_DATA     = 201,
 #ifdef ACT_CODECS
+    MEDIA_SUB               = 300,
     MEDIA_REDIRECT          = 400,
     MEDIA_REDIRECT_NUPLAYER = 700,
 #endif

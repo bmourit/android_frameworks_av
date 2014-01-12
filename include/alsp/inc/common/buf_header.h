@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-/*包类型*/
+/*Packet type*/
 typedef enum
 {
     AUDIO_PACKET = 0x100,
@@ -13,22 +13,23 @@ typedef enum
     SUBPIC_PACKET = 0x300
 } packet_type_t;
 
-//音视频包都预留了28个bytes头未用，现将此28bytes数据结构化
+//Audio and video packets have an unused reserved of 28 bytes in the header.
+//We'll use them for structured data
 typedef struct{
-	/*包类型*/
+	/*Packet type*/
 	unsigned int header_type;
-	/*包载荷长度*/
+	/*Packet payload length*/
 	unsigned int block_len;
-	/*包的文件位置*/
+	/*File packet location*/
 	unsigned int packet_offset;
-	/*包的时间戳*/
+	/*Packet timestamp*/
 	unsigned int packet_ts;
-	/*保留字段1*/
+	/*Reserved field 1*/
 	unsigned int reserved1;
-	/*保留字段2*/
+	/*Reserved field 2*/
 	unsigned int reserved2;
-	/*h264得到正确时间戳需要的信息*/
-	unsigned char stream_end_flag;/*1为结束， 0为否*/
+	/*h264 get the information needed to correct timestamp*/
+	unsigned char stream_end_flag;/* 1 end of stream, 0 No */
 	unsigned char parser_format;
 	unsigned char seek_reset_flag;
 	unsigned char reserved_byte2;

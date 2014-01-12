@@ -18,6 +18,7 @@ LOCAL_SHARED_LIBRARIES := \
             libion
                 
 LOCAL_MODULE_TAGS := optional
+LOCAL_PRELINK_MODULE := false
 
 LOCAL_MODULE:= libalc
 

@@ -18,6 +18,10 @@
 
 #define NUPLAYER_RENDERER_H_
 
+#ifdef ACT_HARDWARE
+#define MAX_DROP_FRAME_NUM	6
+#endif
+
 #include "NuPlayer.h"
 
 namespace android {
@@ -47,6 +51,12 @@ struct NuPlayer::Renderer : public AHandler {
 
     void pause();
     void resume();
+#ifdef ACT_HARDWARE
+    void Seek(bool Seeking);
+    bool shouldSkipNotify();
+    void DiscardForward(int64_t time);
+    bool shouldDiscardForward();
+#endif
 
     enum {
         kWhatEOS                 = 'eos ',
@@ -98,6 +108,10 @@ private:
     int64_t mAnchorTimeRealUs;
 
     Mutex mFlushLock;  // protects the following 2 member vars.
+#ifdef ACT_HARDWARE
+    int32_t mVideoFrmNum;
+    uint32_t mDropFrmNum;
+#endif
     bool mFlushingAudio;
     bool mFlushingVideo;
 
@@ -107,11 +121,23 @@ private:
 
     bool mPaused;
     bool mVideoRenderingStarted;
+#ifdef ACT_HARDWARE
+    bool mSeeking;
+#endif
     int32_t mVideoRenderingStartGeneration;
     int32_t mAudioRenderingStartGeneration;
 
     int64_t mLastPositionUpdateUs;
     int64_t mVideoLateByUs;
+
+#ifdef ACT_HARDWARE
+    int64_t m_discardFrame_video;
+    int64_t m_discardFrame_audio;
+    int64_t m_discardForward_video;
+    int64_t m_discardForward_audio;
+    int64_t last_mediaTimeUs_audio;
+    int64_t last_mediaTimeUs_video;
+#endif
 
     bool onDrainAudioQueue();
     void postDrainAudioQueue(int64_t delayUs = 0);
@@ -133,6 +159,9 @@ private:
     void notifyFlushComplete(bool audio);
     void notifyPosition();
     void notifyVideoLateBy(int64_t lateByUs);
+#ifdef ACT_HARDWARE
+    bool shouldSkip(bool audio,QueueEntry *entry);
+#endif
     void notifyVideoRenderingStart();
 
     void flushQueue(List<QueueEntry> *queue);

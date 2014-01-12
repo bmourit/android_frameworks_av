@@ -555,4 +555,3 @@ void SfDelegate::onInitiateRead(void *data, size_t size) {
 }
 
 }  // namespace android
-

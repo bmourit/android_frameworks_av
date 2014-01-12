@@ -139,8 +139,9 @@ status_t NuMediaExtractor::setDataSource(int fd, off64_t offset, off64_t size) {
     if (err != OK) {
         return err;
     }
+    const char mime_type[32] = "NuMediaExtractor"; //cz_20130723 NuMedia走会原生
 
-    mImpl = MediaExtractor::Create(fileSource);
+    mImpl = MediaExtractor::Create(fileSource,mime_type);
 
     if (mImpl == NULL) {
         return ERROR_UNSUPPORTED;

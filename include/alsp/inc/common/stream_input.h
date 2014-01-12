@@ -2,7 +2,7 @@
 #define __STREAM_INPUT_H__
 
 //------------------------------------------------------------------------------------
-/*ÎÄ¼þ²Ù×÷*/
+/*File operations*/
 #define		DSEEK_SET		0x01
 #define		DSEEK_END		0x02
 #define		DSEEK_CUR		0x03

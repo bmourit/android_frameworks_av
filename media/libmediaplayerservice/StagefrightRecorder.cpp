@@ -75,8 +75,9 @@ StagefrightRecorder::StagefrightRecorder()
       mOutputFd(-1),
       mAudioSource(AUDIO_SOURCE_CNT),
       mVideoSource(VIDEO_SOURCE_LIST_END),
-      mStarted(false), mSurfaceMediaSource(NULL),
-      mCaptureTimeLapse(false) {
+      mCaptureTimeLapse(false),
+      mStarted(false),
+      mSurfaceMediaSource(NULL) {
 
     ALOGV("Constructor");
     reset();
@@ -828,6 +829,7 @@ sp<MediaSource> StagefrightRecorder::createAudioSource() {
         return NULL;
     }
 
+    sp<MediaSource> audioEncoder;
     sp<MetaData> encMeta = new MetaData;
     const char *mime;
     switch (mAudioEncoder) {
@@ -865,7 +867,6 @@ sp<MediaSource> StagefrightRecorder::createAudioSource() {
             mime = "WMA";
             break;
 #endif
-
         default:
             ALOGE("Unknown audio encoder: %d", mAudioEncoder);
             return NULL;
@@ -884,25 +885,15 @@ sp<MediaSource> StagefrightRecorder::createAudioSource() {
         encMeta->setInt32(kKeyTimeScale, mAudioTimeScale);
     }
 
-/* #ifdef ACT_CODECS
-    if(mAudioEncoder < AUDIO_ENCODER_PCM)    {
-#endif */
+    if (mAudioEncoder < AUDIO_ENCODER_PCM) {
     OMXClient client;
     CHECK_EQ(client.connect(), (status_t)OK);
-    sp<MediaSource> audioEncoder =
+    audioEncoder =
         OMXCodec::Create(client.interface(), encMeta,
                          true /* createEncoder */, audioSource);
-#ifdef ACT_AUDIO
-    // If encoder could not be created (as in PCM), then
-    // use ActAudioEncoder as the MediaSource.
-    if (audioEncoder == NULL && AUDIO_ENCODER_PCM) {
-
-    //ALOGE("===cz======createAudioSource google done");
-    //} else {
+    } else {
     audioEncoder = new ActAudioEncoder(audioSource, encMeta);
-    ALOGE("createAudioSource actions done");
     }
-#endif
     mAudioSourceNode = audioSource;
 
     return audioEncoder;
@@ -1080,7 +1071,7 @@ status_t StagefrightRecorder::startMPEG2TSRecording() {
     return mWriter->start();
 }
 
-#ifdef ACT_AUDIO
+#ifdef ACT_HARDWARE
 status_t StagefrightRecorder::startActAudioRecording() {
     sp<MediaSource> audioEncoder = createAudioSource();
     if (audioEncoder == NULL) {
@@ -1150,7 +1141,22 @@ void StagefrightRecorder::clipVideoFrameWidth() {
     }
 }
 
-status_t StagefrightRecorder::checkVideoEncoderCapabilities() {
+status_t StagefrightRecorder::checkVideoEncoderCapabilities(
+        bool *supportsCameraSourceMetaDataMode) {
+    /* hardware codecs must support camera source meta data mode */
+    Vector<CodecCapabilities> codecs;
+    OMXClient client;
+    CHECK_EQ(client.connect(), (status_t)OK);
+    QueryCodecs(
+            client.interface(),
+            (mVideoEncoder == VIDEO_ENCODER_H263 ? MEDIA_MIMETYPE_VIDEO_H263 :
+             mVideoEncoder == VIDEO_ENCODER_MPEG_4_SP ? MEDIA_MIMETYPE_VIDEO_MPEG4 :
+             mVideoEncoder == VIDEO_ENCODER_H264 ? MEDIA_MIMETYPE_VIDEO_AVC : ""),
+            false /* decoder */, true /* hwCodec */, &codecs);
+    *supportsCameraSourceMetaDataMode = codecs.size() > 0;
+    ALOGV("encoder %s camera source meta-data mode",
+            *supportsCameraSourceMetaDataMode ? "supports" : "DOES NOT SUPPORT");
+
     if (!mCaptureTimeLapse) {
         // Dont clip for time lapse capture as encoder will have enough
         // time to encode because of slow capture rate of time lapse.
@@ -1368,7 +1374,9 @@ status_t StagefrightRecorder::setupSurfaceMediaSource() {
 status_t StagefrightRecorder::setupCameraSource(
         sp<CameraSource> *cameraSource) {
     status_t err = OK;
-    if ((err = checkVideoEncoderCapabilities()) != OK) {
+    bool encoderSupportsCameraSourceMetaDataMode;
+    if ((err = checkVideoEncoderCapabilities(
+                &encoderSupportsCameraSourceMetaDataMode)) != OK) {
         return err;
     }
     Size videoSize;
@@ -1380,55 +1388,42 @@ status_t StagefrightRecorder::setupCameraSource(
                 mTimeBetweenTimeLapseFrameCaptureUs);
             return BAD_VALUE;
         }
-
-#ifdef ACT_AUDIO
-    if(mVideoEncoder == VIDEO_ENCODER_H264) {
-#endif
-        mCameraSourceTimeLapse = CameraSourceTimeLapse::CreateFromCamera(
+        
+	if (mVideoEncoder == VIDEO_ENCODER_H264) {
+        	mCameraSourceTimeLapse = CameraSourceTimeLapse::CreateFromCamera(
                 mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
                 videoSize, mFrameRate, mPreviewSurface,
-                mTimeBetweenTimeLapseFrameCaptureUs);
-
-#ifdef ACT_AUDIO
-    } else {
-        mCameraSourceTimeLapse = CameraSourceTimeLapse::CreateFromCamera(
-                mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
-                videoSize, (mFrameRate|0x80000000), mPreviewSurface,
-                mTimeBetweenTimeLapseFrameCaptureUs);
-    		}
-#endif
+                mTimeBetweenTimeLapseFrameCaptureUs, true);
+    	} else {
+    		mCameraSourceTimeLapse = CameraSourceTimeLapse::CreateFromCamera(
+                	mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
+                	videoSize, (mFrameRate|0x80000000), mPreviewSurface,
+                	mTimeBetweenTimeLapseFrameCaptureUs, false);
+    	}
 
         *cameraSource = mCameraSourceTimeLapse;
     } else {
-
-#ifdef ACT_AUDIO
-    if(mVideoEncoder == VIDEO_ENCODER_H264) {
-#endif
-        *cameraSource = CameraSource::CreateFromCamera(
-                mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
-                videoSize, mFrameRate,
-                mPreviewSurface, true /*storeMetaDataInVideoBuffers*/);
-    }
-
-#ifdef ACT_AUDIO
-    else {
-        *cameraSource = CameraSource::CreateFromCamera(
-		mCamera, mCameraProxy, mCameraId, mClientName, mClientUid,
-                videoSize, mFrameRate,
-		mPreviewSurface, false /*storeMetaDataInVideoBuffers*/);
+    	if (mVideoEncoder == VIDEO_ENCODER_H264) {
+            *cameraSource = CameraSource::CreateFromCamera(
+            	    mCamera, mCameraProxy, mCameraId, mClientName, mClientUid, videoSize, mFrameRate,
+            	    mPreviewSurface, true /*storeMetaDataInVideoBuffers*/);
+    	} else {
+    		*cameraSource = CameraSource::CreateFromCamera(
+			mCamera, mCameraProxy, mCameraId, mClientName, mClientUid, videoSize, mFrameRate,
+			mPreviewSurface, false /*storeMetaDataInVideoBuffers*/);
     	}
     }
-#endif
-
     mCamera.clear();
     mCameraProxy.clear();
     if (*cameraSource == NULL) {
+    	ALOGE("cameraSource ERR");
         return UNKNOWN_ERROR;
     }
 
     if ((*cameraSource)->initCheck() != OK) {
         (*cameraSource).clear();
         *cameraSource = NULL;
+        ALOGE("cameraSource NO_INIT ERR");
         return NO_INIT;
     }
 
@@ -1487,8 +1482,6 @@ status_t StagefrightRecorder::setupVideoEncoder(
     CHECK(meta->findInt32(kKeyStride, &stride));
     CHECK(meta->findInt32(kKeySliceHeight, &sliceHeight));
     CHECK(meta->findInt32(kKeyColorFormat, &colorFormat));
-
-#ifdef ACT_AUDIO
     {
 	int frameWidthActual = 0;
 	int frameHeightActual = 0;
@@ -1499,11 +1492,11 @@ status_t StagefrightRecorder::setupVideoEncoder(
 	    enc_meta->setInt32('phgt', frameHeightActual);
 	}
     }
+
     enc_meta->setInt32('ctlp', 0);
-    if(mCaptureTimeLapse){
+    if (mCaptureTimeLapse) {
     	enc_meta->setInt32('ctlp', 1);
     }
-#endif
 
     enc_meta->setInt32(kKeyWidth, width);
     enc_meta->setInt32(kKeyHeight, height);
@@ -1590,6 +1583,7 @@ status_t StagefrightRecorder::setupAudioEncoder(const sp<MediaWriter>& writer) {
 
     sp<MediaSource> audioEncoder = createAudioSource();
     if (audioEncoder == NULL) {
+    	ALOGE("audioEncoder is Null");
         return UNKNOWN_ERROR;
     }
 
@@ -1613,12 +1607,14 @@ status_t StagefrightRecorder::setupMPEG4Recording(
         sp<MediaSource> mediaSource;
         err = setupMediaSource(&mediaSource);
         if (err != OK) {
+        	ALOGE("setupMediaSource failed");
             return err;
         }
 
         sp<MediaSource> encoder;
         err = setupVideoEncoder(mediaSource, videoBitRate, &encoder);
         if (err != OK) {
+        	ALOGE("setupVideoEncoder failed");
             return err;
         }
 
@@ -1631,7 +1627,10 @@ status_t StagefrightRecorder::setupMPEG4Recording(
     // camcorder applications in the recorded files.
     if (!mCaptureTimeLapse && (mAudioSource != AUDIO_SOURCE_CNT)) {
         err = setupAudioEncoder(writer);
-        if (err != OK) return err;
+        if (err != OK){
+        	ALOGE("setupAudioEncoder failed");
+        	return err;
+        }
         *totalBitRate += mAudioBitRate;
     }
 
@@ -1684,6 +1683,7 @@ status_t StagefrightRecorder::startMPEG4Recording() {
             mOutputFd, mVideoWidth, mVideoHeight,
             mVideoBitRate, &totalBitRate, &mWriter);
     if (err != OK) {
+    	ALOGE("MP4 Setup err");
         return err;
     }
 
@@ -1693,6 +1693,7 @@ status_t StagefrightRecorder::startMPEG4Recording() {
 
     err = mWriter->start(meta.get());
     if (err != OK) {
+    	ALOGE("Writer->start err");
         return err;
     }
 

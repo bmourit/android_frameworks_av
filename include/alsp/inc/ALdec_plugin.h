@@ -15,15 +15,15 @@
 extern "C" {
 #endif
 
-/*图像格式类型*/
+/*Image format type*/
 #define YUV420_SEMI_PLANAR         0x00
 #define YUV420_PLANAR              0x01
 
-/*最大audio和video包长度*/
+/*max AV packet length*/
 #define AUDIO_MAX_PKT_SIZE        204800
 #define VIDEO_MAX_PKT_SIZE        2048000
 
-/* 定义插件返回错误号*/
+/* define plug-in error numbers */
 typedef enum
 {
 	PLUGIN_RETURN_ERR = -1,
@@ -35,14 +35,14 @@ typedef enum
 }plugin_err_no_t;
 
 
-/*parser和decoder之间的传递包的数据结构*/
+/*parser and decoder transfer between packet data structure*/
 typedef struct
 {
 	unsigned char *data;
 	unsigned int data_len;
 }av_buf_t;
 
-/*中间件发给插件ex_ops接口的命令字（后续会有拓展）*/
+/*Plug-in ex_ops distributed middleware interface command word ( following expansion )*/
 typedef enum
 {
 	SET_SUBPIC,

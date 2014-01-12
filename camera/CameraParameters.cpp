@@ -88,9 +88,19 @@ const char CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW[] = "max-num-detected
 const char CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW[] = "max-num-detected-faces-sw";
 const char CameraParameters::KEY_RECORDING_HINT[] = "recording-hint";
 const char CameraParameters::KEY_VIDEO_SNAPSHOT_SUPPORTED[] = "video-snapshot-supported";
+const char CameraParameters::KEY_FULL_VIDEO_SNAP_SUPPORTED[] = "full-video-snap-supported";
 const char CameraParameters::KEY_VIDEO_STABILIZATION[] = "video-stabilization";
 const char CameraParameters::KEY_VIDEO_STABILIZATION_SUPPORTED[] = "video-stabilization-supported";
 const char CameraParameters::KEY_LIGHTFX[] = "light-fx";
+const char CameraParameters::KEY_AE_BRACKET_HDR[] = "ae-bracket-hdr";
+
+/*only effective when KEY_AE_BRACKET_HDR set to ae_bracketing*/
+//const char CameraParameters::KEY_AE_BRACKET_SETTING_KEY[] = "ae-bracket-setting";
+
+#ifdef HAVE_ISO
+const char CameraParameters::KEY_SUPPORTED_ISO_MODES[] = "iso-values";
+const char CameraParameters::KEY_ISO_MODE[] = "iso";
+#endif
 
 const char CameraParameters::TRUE[] = "true";
 const char CameraParameters::FALSE[] = "false";
@@ -131,7 +141,8 @@ const char CameraParameters::FLASH_MODE_RED_EYE[] = "red-eye";
 const char CameraParameters::FLASH_MODE_TORCH[] = "torch";
 
 // Values for scene mode settings.
-const char CameraParameters::SCENE_MODE_AUTO[] = "auto";
+const char CameraParameters::SCENE_MODE_AUTO[] = "auto"; // corresponds to CAMERA_BESTSHOT_OFF in HAL
+const char CameraParameters::SCENE_MODE_ASD[] = "asd";   // corresponds to CAMERA_BESTSHOT_AUTO in HAL
 const char CameraParameters::SCENE_MODE_ACTION[] = "action";
 const char CameraParameters::SCENE_MODE_PORTRAIT[] = "portrait";
 const char CameraParameters::SCENE_MODE_LANDSCAPE[] = "landscape";
@@ -147,8 +158,9 @@ const char CameraParameters::SCENE_MODE_SPORTS[] = "sports";
 const char CameraParameters::SCENE_MODE_PARTY[] = "party";
 const char CameraParameters::SCENE_MODE_CANDLELIGHT[] = "candlelight";
 const char CameraParameters::SCENE_MODE_BARCODE[] = "barcode";
-const char CameraParameters::SCENE_MODE_HDR[] = "hdr";
 
+const char CameraParameters::SCENE_MODE_HDR[] = "hdr";
+// Formats for setPreviewFormat and setPictureFormat.
 const char CameraParameters::PIXEL_FORMAT_YUV422SP[] = "yuv422sp";
 const char CameraParameters::PIXEL_FORMAT_YUV420SP[] = "yuv420sp";
 const char CameraParameters::PIXEL_FORMAT_YUV422I[] = "yuv422i-yuyv";
@@ -236,6 +248,11 @@ void CameraParameters::unflatten(const String8 &params)
 
 void CameraParameters::set(const char *key, const char *value)
 {
+#ifndef ACT_HARDWARE
+    if (key == NULL || value == NULL)
+        return;
+#endif
+
     // XXX i think i can do this with strspn()
     if (strchr(key, '=') || strchr(key, ';')) {
         //XXX ALOGE("Key \"%s\"contains invalid character (= or ;)", key);
@@ -253,7 +270,11 @@ void CameraParameters::set(const char *key, const char *value)
 void CameraParameters::set(const char *key, int value)
 {
     char str[16];
+#ifdef ACT_HARDWARE
     sprintf(str, "%d", value);
+#else
+    snprintf(str, sizeof(str), "%d", value);
+#endif
     set(key, str);
 }
 
@@ -318,6 +339,34 @@ static int parse_pair(const char *str, int *first, int *second, char delim,
     return 0;
 }
 
+#ifndef ACT_HARDWARE
+// Parse string like "(1, 2, 3, 4, ..., N)"
+// num is pointer to an allocated array of size N
+static int parseNDimVector(const char *str, int *num, int N, char delim = ',')
+{
+    char *start, *end;
+    if(num == NULL) {
+        ALOGE("Invalid output array (num == NULL)");
+        return -1;
+    }
+    //check if string starts and ends with parantheses
+    if(str[0] != '(' || str[strlen(str)-1] != ')') {
+        ALOGE("Invalid format of string %s, valid format is (n1, n2, n3, n4 ...)", str);
+        return -1;
+    }
+    start = (char*) str;
+    start++;
+    for(int i=0; i<N; i++) {
+        *(num+i) = (int) strtol(start, &end, 10);
+        if(*end != delim && i < N-1) {
+            ALOGE("Cannot find delimeter '%c' in string \"%s\". end = %c", delim, str, *end);
+            return -1;
+        }
+        start = end+1;
+    }
+    return 0;
+}
+#endif
 static void parseSizesList(const char *sizesStr, Vector<Size> &sizes)
 {
     if (sizesStr == 0) {
@@ -346,7 +395,11 @@ static void parseSizesList(const char *sizesStr, Vector<Size> &sizes)
 void CameraParameters::setPreviewSize(int width, int height)
 {
     char str[32];
+#ifdef ACT_HARDWARE
     sprintf(str, "%dx%d", width, height);
+#else
+    snprintf(str, sizeof(str), "%dx%d", width, height);
+#endif
     set(KEY_PREVIEW_SIZE, str);
 }
 

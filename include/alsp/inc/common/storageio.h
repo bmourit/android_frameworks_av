@@ -10,7 +10,7 @@
 ********************************************************************************/
 /*!
 * \file     storageio.h
-* \brief    定义对存储设备的输入输出接口
+* \brief    Defines the storage io interfaces for the device
 * \author   kkli
 * \version 1.0
 * \date  2008/09/02
@@ -20,16 +20,16 @@
 
 /*!
  * \brief
- *      提供和标准文件系统操作接口一致的存储设备输入输出接口
+ *      Provide a consistent and standard file system interface storage devices operating input and output interfaces
  */
 typedef struct storage_io_s {
-    /*! 读数据 */
+    /*! Read data */
     int (*read)(void *buf, int size, int count, struct storage_io_s *io);
-    /*! 写数据 */
+    /*! Write data */
     int (*write)(void *buf, int size, int count, struct storage_io_s *io);
-    /*! 定位 */
+    /*! Positioning */
     int (*seek)(struct storage_io_s *io, mmm_off_t offset, int whence);
-    /*! 文件位置 */
+    /*! File location */
     mmm_off_t (*tell)(struct storage_io_s *io);
 } storage_io_t;
 

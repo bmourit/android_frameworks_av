@@ -112,6 +112,11 @@ private:
 
     int64_t mStartupSeekTimeUs;
 
+#ifdef ACT_HARDWARE
+    int64_t mLastPositionUpdateUs;
+    bool mBufferingFlag;
+#endif
+
     status_t prepare_l();
 
     DISALLOW_EVIL_CONSTRUCTORS(NuPlayerDriver);

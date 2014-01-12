@@ -33,6 +33,11 @@
 
 #include <private/gui/ComposerService.h>
 
+
+#include <ui/GraphicBufferMapper.h>
+#include <ui/Rect.h>
+#include "video_mediadata.h"
+
 namespace android {
 
 SurfaceMediaSource::SurfaceMediaSource(uint32_t bufferWidth, uint32_t bufferHeight) :
@@ -264,11 +269,32 @@ static void passMetadataBuffer(MediaBuffer **buffer,
     OMX_U32 type = kMetadataBufferTypeGrallocSource;
     memcpy(data, &type, 4);
     memcpy(data + 4, &bufferHandle, sizeof(buffer_handle_t));
-
+#if 0
+    if(1){
+    	void *vaddr;
+    	unsigned char *pvaddr;
+    	int64_t mcurTimeUs = 0;
+    	int64_t mFrameTimems = 0;
+		GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+		Rect bounds(1280, 720);
+		int usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+		if (mapper.lock(bufferHandle, usage, bounds, &vaddr) != 0){
+			ALOGE("Mapper failed\n");
+		}
+		
+		pvaddr = static_cast<unsigned char*>(vaddr);
+		ALOGD("vaddr %x,%x,%x,%x",pvaddr[1280*360*4+640*4],pvaddr[1280*360*4+640*4+1],pvaddr[1280*360*4+640*4+2],pvaddr[1280*360*4+640*4+3]);
+		//memset(pvaddr,0,1280*720*4);
+		//fwrite(pvaddr,1,1280*4*720,fsource);
+		if (mapper.unlock(bufferHandle) != 0){
+			ALOGE("unMapper failed\n");
+		}
+    }
+#endif
     ALOGV("handle = %p, , offset = %d, length = %d",
             bufferHandle, (*buffer)->range_length(), (*buffer)->range_offset());
 }
-
+const static int64_t kEncBufferTimeOutNs = 3000000000LL;
 status_t SurfaceMediaSource::read( MediaBuffer **buffer,
                                     const ReadOptions *options)
 {
@@ -294,6 +320,7 @@ status_t SurfaceMediaSource::read( MediaBuffer **buffer,
         if (err == BufferQueue::NO_BUFFER_AVAILABLE) {
             // wait for a buffer to be queued
             mFrameAvailableCondition.wait(mMutex);
+
         } else if (err == OK) {
             err = item.mFence->waitForever("SurfaceMediaSource::read");
             if (err) {

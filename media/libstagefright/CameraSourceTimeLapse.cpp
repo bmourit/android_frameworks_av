@@ -41,13 +41,15 @@ CameraSourceTimeLapse *CameraSourceTimeLapse::CreateFromCamera(
         Size videoSize,
         int32_t videoFrameRate,
         const sp<IGraphicBufferProducer>& surface,
-        int64_t timeBetweenFrameCaptureUs) {
+        int64_t timeBetweenFrameCaptureUs,
+        bool storeMetaDataInVideoBuffers) {
 
     CameraSourceTimeLapse *source = new
             CameraSourceTimeLapse(camera, proxy, cameraId,
                 clientName, clientUid,
                 videoSize, videoFrameRate, surface,
-                timeBetweenFrameCaptureUs);
+                timeBetweenFrameCaptureUs,
+                storeMetaDataInVideoBuffers);
 
     if (source != NULL) {
         if (source->initCheck() != OK) {
@@ -67,21 +69,24 @@ CameraSourceTimeLapse::CameraSourceTimeLapse(
         Size videoSize,
         int32_t videoFrameRate,
         const sp<IGraphicBufferProducer>& surface,
-        int64_t timeBetweenFrameCaptureUs)
-      : CameraSource(camera, proxy, cameraId, clientName, clientUid,
-                videoSize, videoFrameRate, surface, true),
-      mTimeBetweenTimeLapseVideoFramesUs(1E6/videoFrameRate),
+        int64_t timeBetweenFrameCaptureUs,
+        bool storeMetaDataInVideoBuffers)
+
+    : CameraSource(camera, proxy, cameraId, clientName, clientUid,
+	videoSize, (videoFrameRate&0x7fffffff), surface, (videoFrameRate&0x80000000)?false:true),
+    	mTimeBetweenTimeLapseVideoFramesUs(1E6/(videoFrameRate&0x7fffffff)),
       mLastTimeLapseFrameRealTimestampUs(0),
       mSkipCurrentFrame(false) {
 
     mTimeBetweenFrameCaptureUs = timeBetweenFrameCaptureUs;
-    ALOGD("starting time lapse mode: %lld us",
-        mTimeBetweenFrameCaptureUs);
-
+    ALOGE("starting time lapse mode: %lld us,%d",
+        mTimeBetweenFrameCaptureUs,mInitCheck);
+		
     mVideoWidth = videoSize.width;
     mVideoHeight = videoSize.height;
 
-    if (!trySettingVideoSize(videoSize.width, videoSize.height)) {
+    if ((mInitCheck != OK) && !trySettingVideoSize(videoSize.width, videoSize.height)) {
+    	ALOGE("mInitCheck NO_INIT");
         mInitCheck = NO_INIT;
     }
 

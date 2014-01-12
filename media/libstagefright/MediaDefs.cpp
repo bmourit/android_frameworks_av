@@ -25,7 +25,7 @@ const char *MEDIA_MIMETYPE_VIDEO_VP9 = "video/x-vnd.on2.vp9";
 const char *MEDIA_MIMETYPE_VIDEO_AVC = "video/avc";
 const char *MEDIA_MIMETYPE_VIDEO_MPEG4 = "video/mp4v-es";
 const char *MEDIA_MIMETYPE_VIDEO_H263 = "video/3gpp";
-const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";
+//const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";//sync from zh, why?
 const char *MEDIA_MIMETYPE_VIDEO_RAW = "video/raw";
 
 const char *MEDIA_MIMETYPE_AUDIO_AMR_NB = "audio/3gpp";
@@ -59,7 +59,7 @@ const char *MEDIA_MIMETYPE_TEXT_SUBRIP = "application/x-subrip";
 
 /*******************************Actions inside*********************************/
 const char *MEDIA_MIMETYPE_VIDEO_VC1 = "video/vc1";
-//const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";
+const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";
 const char *MEDIA_MIMETYPE_VIDEO_DIV3 = "video/div3";
 const char *MEDIA_MIMETYPE_VIDEO_RV = "video/rv";
 const char *MEDIA_MIMETYPE_VIDEO_AVS = "video/avs";
@@ -81,7 +81,7 @@ const char *MEDIA_MIMETYPE_AUDIO_ACT_OGG = "audio/OGG";
 const char *MEDIA_MIMETYPE_AUDIO_ACT_DTS = "audio/DTS";
 const char *MEDIA_MIMETYPE_AUDIO_ACT_AC3 = "audio/AC3";
 const char *MEDIA_MIMETYPE_AUDIO_ACT_APE = "audio/APE";
-//const char *MEDIA_MIMETYPE_AUDIO_ACT_FLAC= "audio/FLAC";
+const char *MEDIA_MIMETYPE_AUDIO_ACT_FLAC= "audio/FLAC";
 const char *MEDIA_MIMETYPE_AUDIO_ACT_ACELP = "audio/ACELP";
 const char *MEDIA_MIMETYPE_AUDIO_ACT_MPC= "audio/MPC";
 const char *MEDIA_MIMETYPE_AUDIO_ACT_AIFF = "audio/AIFF";

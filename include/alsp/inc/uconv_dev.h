@@ -6,13 +6,13 @@ extern "C" {
 #endif
 /*!
  * \brief
- *		利用ucnv进行转码
+ *		ucnv transcoding usage
  * */
 int convert_ucnv(char *from_charset, char *to_charset, char *inbuf, int inlen,
 		char *outbuf, int outlen);
 /*!
  * \brief
- *		检查是否有效的utf-8格式
+ *		check for valid utf-8 format
  * */
 int check_valid_utf8(char *utf8, int length);
 

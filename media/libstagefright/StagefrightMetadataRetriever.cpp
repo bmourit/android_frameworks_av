@@ -28,6 +28,14 @@
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/OMXCodec.h>
 #include <media/stagefright/MediaDefs.h>
+#include <actal_posix_dev.h>
+
+/** add by kkli, if enable
+  * fix the multi-language display
+  *   1. detect the encoding
+  *   2. convert to utf-8
+  */
+//#define ACTIONS_ASCII_CONVERT
 
 namespace android {
 
@@ -144,6 +152,8 @@ static VideoFrame *extractVideoFrameWithCodecFlags(
         int seekMode) {
 
     sp<MetaData> format = source->getFormat();
+	int64_t mVDuration;
+    format->setInt32(kKeyActCreateThumbnail,1);
 
     // XXX:
     // Once all vendors support OMX_COLOR_FormatYUV420Planar, we can
@@ -189,6 +199,10 @@ static VideoFrame *extractVideoFrameWithCodecFlags(
                 || thumbNailTime < 0) {
             thumbNailTime = 0;
         }
+		if(thumbNailTime==0){
+			format->findInt64(kKeyDuration, &mVDuration);
+			thumbNailTime=mVDuration/2;
+		}
         options.setSeekTo(thumbNailTime, mode);
     } else {
         thumbNailTime = -1;
@@ -215,7 +229,7 @@ static VideoFrame *extractVideoFrameWithCodecFlags(
         return NULL;
     }
 
-    ALOGV("successfully decoded video frame.");
+    ALOGI("successfully decoded video frame.");
 
     int32_t unreadable;
     if (buffer->meta_data()->findInt32(kKeyIsUnreadable, &unreadable)
@@ -248,7 +262,8 @@ static VideoFrame *extractVideoFrameWithCodecFlags(
     int32_t width, height;
     CHECK(meta->findInt32(kKeyWidth, &width));
     CHECK(meta->findInt32(kKeyHeight, &height));
-
+    width=(width+15)&(~15);
+    height=(height+15)&(~15);
     int32_t crop_left, crop_top, crop_right, crop_bottom;
     if (!meta->findRect(
                 kKeyCropRect,
@@ -281,6 +296,18 @@ static VideoFrame *extractVideoFrameWithCodecFlags(
     }
 
     int32_t srcFormat;
+	  uint8_t* pfrm=(uint8_t*)buffer->data();
+
+    
+    if(pfrm==NULL){
+    	 buffer->release();
+       buffer = NULL;
+       decoder->stop();
+       delete frame;
+       frame = NULL;
+       return NULL;
+    }
+    actal_cache_flush(pfrm,width*height*3/2);
     CHECK(meta->findInt32(kKeyColorFormat, &srcFormat));
 
     ColorConverter converter(
@@ -288,7 +315,7 @@ static VideoFrame *extractVideoFrameWithCodecFlags(
 
     if (converter.isValid()) {
         err = converter.convert(
-                (const uint8_t *)buffer->data() + buffer->range_offset(),
+        		(const uint8_t*)pfrm + buffer->range_offset(),
                 width, height,
                 crop_left, crop_top, crop_right, crop_bottom,
                 frame->mData,
@@ -382,9 +409,9 @@ VideoFrame *StagefrightMetadataRetriever::getFrameAtTime(
 
     VideoFrame *frame =
         extractVideoFrameWithCodecFlags(
-                &mClient, trackMeta, source, OMXCodec::kPreferSoftwareCodecs,
+                &mClient, trackMeta, source, 0/*OMXCodec::kPreferSoftwareCodecs*/,
                 timeUs, option);
-
+#if 0
     if (frame == NULL) {
         ALOGV("Software decoder failed to extract thumbnail, "
              "trying hardware decoder.");
@@ -392,7 +419,7 @@ VideoFrame *StagefrightMetadataRetriever::getFrameAtTime(
         frame = extractVideoFrameWithCodecFlags(&mClient, trackMeta, source, 0,
                         timeUs, option);
     }
-
+#endif
     return frame;
 }
 
@@ -470,7 +497,39 @@ void StagefrightMetadataRetriever::parseMetaData() {
     for (size_t i = 0; i < kNumMapEntries; ++i) {
         const char *value;
         if (meta->findCString(kMap[i].from, &value)) {
-            mMetaData.add(kMap[i].to, String8(value));
+#ifdef ACTIONS_ASCII_CONVERT
+			int inbuf_len = strlen(value);
+			if ((inbuf_len > strlen("")) && (actal_check_utf8(value, inbuf_len) < 0)) {
+				char from_charset[20];		
+				int ret = 0;
+				
+				ret = actal_encode_detect(value, from_charset);
+				if (ret < 0) {
+					ALOGV("parseMetaData: actal_encode_detect fail");
+					continue;
+				}
+				
+				int outbuf_len = 3 * inbuf_len;
+				char *outbuf = new char [outbuf_len];				
+				if (outbuf == NULL) {
+					ALOGV("parseMetaData: new outbuf fail, len=%d", outbuf_len);
+					continue;
+				}
+				
+				ret = actal_convert_ucnv(from_charset, 
+										(char *)"UTF-8", 
+										value, 
+										inbuf_len,
+										outbuf,
+										outbuf_len);
+				if (ret >= 0) {
+					mMetaData.add(kMap[i].to, String8(outbuf));
+				}
+				
+				delete outbuf;
+			}
+#endif
+			mMetaData.add(kMap[i].to, String8(value));	
         }
     }
 

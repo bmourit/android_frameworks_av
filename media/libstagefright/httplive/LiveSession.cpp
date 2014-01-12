@@ -1142,4 +1142,3 @@ void LiveSession::postPrepared(status_t err) {
 }
 
 }  // namespace android
-

@@ -101,6 +101,9 @@ private:
     int64_t mSeekTimeUs;
 
     bool mStarted;
+#ifdef ACT_HARDWARE
+    bool mPause;
+#endif
 
     bool mIsFirstBuffer;
     status_t mFirstBufferResult;

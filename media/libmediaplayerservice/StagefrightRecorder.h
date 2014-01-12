@@ -142,7 +142,8 @@ private:
     status_t startActAudioRecording();
 #endif
     sp<MediaSource> createAudioSource();
-    status_t checkVideoEncoderCapabilities();
+    status_t checkVideoEncoderCapabilities(
+    bool *supportsCameraSourceMetaDataMode);
     status_t checkAudioEncoderCapabilities();
     // Generic MediaSource set-up. Returns the appropriate
     // source (CameraSource or SurfaceMediaSource)

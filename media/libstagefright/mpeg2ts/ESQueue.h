@@ -64,6 +64,7 @@ private:
     List<RangeInfo> mRangeInfos;
 
     sp<MetaData> mFormat;
+    int8_t *init_buf;
 
     sp<ABuffer> dequeueAccessUnitH264();
     sp<ABuffer> dequeueAccessUnitAAC();

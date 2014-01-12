@@ -10,7 +10,7 @@
 *******************************************************************************/
 /*!
  * \file     al_libc.h
- * \brief    al内部实现的C库函数声明，对应于有一个确定的实现
+ * \brief    C library function for al_libc internal implementation.
  * \author   kkli
  * \version 1.0
  * \date  2009/1/1
@@ -28,72 +28,72 @@ typedef int64_t mmm_off_t;
 
 /*!
  * \brief
- *      内存相关操作声明
+ *      Memory-related operating statement
  */
 void *actal_memcpy(void *, const void *, int32_t);
 void *actal_memset(void *, int32_t, int32_t);
 
 /*!
  * \brief
- *      内存管理相关操作声明
+ *      Memory management related operations Statement
  */
-/*! 申请逻辑地址，参数为长度 */
+/*! Apply logical address parameters for the length */
 void *actal_malloc(int32_t);
 void actal_free(void *);
-/*! 申请物理地址连续的地址，第一个参数为长度，第二个参数为输出的物理地址 */
+/*! Consecutive addresses for the physical address of the application. The first argument is the length and the second parameter is the physical address of output */
 void *actal_malloc_dma(int32_t, int32_t *);
 void actal_free_dma(void *);
-/*! 申请物理地址连续的write-through地址，第一个参数为长度，第二个参数为输出的物理地址
-    write-through的特点是：保证了读的速度，写的时候不只是更新到cache
+/*! Apply physical address. Address consecutive write-through, the first argument is the length and the second parameter is the physical address output.
+聽聽聽聽 Write-through features are: to ensure the read speed, not just the write speed to the cache update.
  */
 void *actal_malloc_wt(int32_t, int32_t *);
 void actal_free_wt(void *);
 void actal_cache_flush(void *, int);
 void actal_cache_env(void *, int);
-/*! 申请物理地址连续的不经过cache的地址，第一个参数为长度，第二个参数为输出的物理地址
-    不经过cache的特点是：对该地址进行操作后可以直接进行dma操作
+/*! Continuous application without a physical address for cache address. The first parameter is the length and the second parameter is the output of the physical address.
+聽聽聽聽 Without cache features are: dma functions can be performed directly after the operation of the address.
  */
 void *actal_malloc_uncache(int32_t, int32_t *);
 void actal_free_uncache(void *);
-/*! 获取物理地址 */
+/*! Get the physical address */
 int actal_get_phyaddr(void *);
 void * actal_get_virtaddr(int );
 /*!
  * \brief
- *      按规则打印一段内存地址
+ *      print the memory address 
  */
 void actal_dump(int *, int32_t);
 
 /*!
  * \brief
- *      获取系统当前时间，单位ms，用于测定性能
+ *      Get the current system time in ms, for measuring performance
  */
 int64_t actal_get_ts(void);
 
 /*!
  * \brief
- *      设定打印输出，可被统一打开或关闭
+ *      Set the print output to be turned on or off uniformly
  */
 int32_t actal_printf(const char *format, ...);
 /*!
  * \brief
- *      设定打印输出，始终打开，字符限制为256个
+ *      Set the print output, always open, limited to 256 characters
  */
 int32_t actal_error(const char *format, ...);
 /*!
  * \brief
- *      设定打印输出，发布时关闭
+ *      Set print output off and release
  */
 int32_t actal_info(const char *format, ...);
 
 /*!
  * \brief
- *      设置睡眠一段时间，输入参数毫秒，会导致任务切换
+ *      Set the sleep time. The input parameters in milliseconds, will lead the task switching
  */
 void actal_sleep_ms(int32_t);
 /*!
  * \brief
- *      获取IC信息，0~7bit表示ic类型，8~15bit表示ic版本，如：0x4303表示5003 C版
+ *      Get IC information, 0 ~ 7bit = ic type, 8 ~ 15bit = ic version, such as: 0x4303 indicates 5003 C version
  */
 int actal_get_icinfo(void);
 

@@ -79,7 +79,7 @@ const static Int profile_level_max_packet_size[8] =
 
 const static Int profile_level_max_mbsPerSec[8] =
 {
-    1485, 1485, 5940, 11880, 5940, 23760, 23760, 23760
+    1485, 1485, 5940, 11880, 5940, 244800, 244800, 244800
 };
 
 const static Int profile_level_max_VBV_size[8] =

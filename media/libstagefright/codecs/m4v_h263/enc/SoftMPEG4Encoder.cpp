@@ -751,9 +751,9 @@ void SoftMPEG4Encoder::onQueueFilled(OMX_U32 portIndex) {
         outHeader->nTimeStamp = inputBufInfo->mTimeUs;
         outHeader->nFlags |= (inputBufInfo->mFlags | OMX_BUFFERFLAG_ENDOFFRAME);
         outHeader->nFilledLen = dataLength;
-        mInputBufferInfoVec.erase(mInputBufferInfoVec.begin());
         outInfo->mOwnedByUs = false;
         notifyFillBufferDone(outHeader);
+	mInputBufferInfoVec.erase(mInputBufferInfoVec.begin());
     }
 }
 

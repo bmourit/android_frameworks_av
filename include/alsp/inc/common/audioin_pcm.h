@@ -10,7 +10,7 @@
 *******************************************************************************/
 /*!
  * \file     audioin_pcm.h
- * \brief    解码输出的数据结构
+ * \brief    Decoder output data structure
  * \author   kkli
  * \version 1.0
  * \date  2008/09/05
@@ -20,20 +20,20 @@
 
 /*!
  * \brief  
- *      定义最大的输入声道数
+ *      Define the max num of input channels
  */
 #define MAX_CHANNEL_IN     2
 /*!
  * \brief  
- *      音频编码插件帧解码的输入或音频输入模块的输出
+ *      Outout audio encoding plug-frame decoding input or audio input module
  */
 typedef struct
 {
-    /*! pcm数据指针数组 */
+    /*! PCM data pointer array */
     int pcm[MAX_CHANNEL_IN];
-    /*! 当前输入的channel数 */
+    /*! Number of channels currently input */
     int channels;
-    /*! 当前输入的sample数 */
+    /*! Few sample current input */
     int samples;
 } audioin_pcm_t;
 

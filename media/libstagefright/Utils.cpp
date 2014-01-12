@@ -15,7 +15,7 @@
  */
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "Utils"
+#define LOG_TAG "Utilsaaaa"
 #include <utils/Log.h>
 
 #include "include/ESDS.h"
@@ -99,6 +99,7 @@ status_t convertMetaDataToMessage(
                     ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_DTS, mime)) \
                     ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_AC3, mime)) \
                     ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_APE, mime)) \
+                    ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_FLAC, mime)) \
                     ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_ACELP, mime)) \
                     ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_MPC, mime)) \
                     ||(!strcasecmp(MEDIA_MIMETYPE_AUDIO_ACT_AIFF, mime)) \
@@ -120,6 +121,13 @@ status_t convertMetaDataToMessage(
 
         msg->setInt32("width", width);
         msg->setInt32("height", height);
+
+	 int64_t seekedListTimeBase=0;
+	 int64_t maxSegDuration=0ll;		
+	 meta->findInt64(kKeyActNuSeekedListTimeBase, &seekedListTimeBase);
+	 meta->findInt64(kKeyActMaxSegDuration, &maxSegDuration);
+	 msg->setInt64("nu-seeked-time", seekedListTimeBase);
+        msg->setInt64("max-seg-duration", maxSegDuration);
 
         int32_t sarWidth, sarHeight;
         if (meta->findInt32(kKeySARWidth, &sarWidth)
@@ -585,7 +593,8 @@ const struct mime_conv_t* p = &mimeLookup[0];
     return BAD_VALUE;
 }
 
-bool canOffloadStream(const sp<MetaData>& meta, bool hasVideo, bool isStreaming)
+bool canOffloadStream(const sp<MetaData>& meta, bool hasVideo,
+                      bool isStreaming, audio_stream_type_t streamType)
 {
     const char *mime;
     CHECK(meta->findCString(kKeyMIMEType, &mime));
@@ -639,7 +648,7 @@ bool canOffloadStream(const sp<MetaData>& meta, bool hasVideo, bool isStreaming)
     info.bit_rate = brate;
 
 
-    info.stream_type = AUDIO_STREAM_MUSIC;
+    info.stream_type = streamType;
     info.has_video = hasVideo;
     info.is_streaming = isStreaming;
 

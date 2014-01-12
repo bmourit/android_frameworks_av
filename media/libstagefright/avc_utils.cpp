@@ -465,6 +465,78 @@ sp<MetaData> MakeAACCodecSpecificData(
 
     return meta;
 }
+//#define USE_ACTIONS_AUDIO
+sp<MetaData> MakeAACCodecSpecificData_1(void *init_buf,
+        unsigned profile, unsigned sampling_freq_index,
+        unsigned channel_configuration) {
+    sp<MetaData> meta = new MetaData;
+#ifdef USE_ACTIONS_AUDIO
+	meta->setCString(kKeyMIMEType, "audio/AAC");
+#else    
+    meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_AUDIO_AAC);
+#endif    
+
+    CHECK_LE(sampling_freq_index, 11u);
+    static const int32_t kSamplingFreq[] = {
+        96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050,
+        16000, 12000, 11025, 8000
+    };
+
+#ifdef USE_ACTIONS_AUDIO
+	int32_t samplerate = kSamplingFreq[sampling_freq_index];
+    if (kSamplingFreq[sampling_freq_index] < 24*1024)
+    {
+		samplerate = kSamplingFreq[sampling_freq_index]*2;
+	}
+	meta->setInt32(kKeySampleRate,samplerate);
+#else
+    
+    meta->setInt32(kKeySampleRate, kSamplingFreq[sampling_freq_index]);
+#endif
+    meta->setInt32(kKeyChannelCount, channel_configuration);
+
+    static const uint8_t kStaticESDS[] = {
+        0x03, 22,
+        0x00, 0x00,     // ES_ID
+        0x00,           // streamDependenceFlag, URL_Flag, OCRstreamFlag
+
+        0x04, 17,
+        0x40,                       // Audio ISO/IEC 14496-3
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+
+        0x05, 2,
+        // AudioSpecificInfo follows
+
+        // oooo offf fccc c000
+        // o - audioObjectType
+        // f - samplingFreqIndex
+        // c - channelConfig
+    };
+#ifdef USE_ACTIONS_AUDIO
+
+	sp<ABuffer> csd = new ABuffer(init_buf,12);
+	*((int32_t *)(init_buf)) = profile + 1;
+	*((int32_t *)(init_buf + 4)) = sampling_freq_index;
+	*((int32_t *)(init_buf + 8))  = channel_configuration;
+	ALOGD("csd->data() %x csd->data()[0] %x",csd->data(),csd->data()[0]);
+	ALOGD("profile %x,sampling_freq_index %x,channel_configuration %x",profile,sampling_freq_index,channel_configuration);
+	meta->setPointer(kKeyESDS, (void*)(csd->data()));
+#else
+    sp<ABuffer> csd = new ABuffer(sizeof(kStaticESDS) + 2);
+    memcpy(csd->data(), kStaticESDS, sizeof(kStaticESDS));
+
+    csd->data()[sizeof(kStaticESDS)] =
+        ((profile + 1) << 3) | (sampling_freq_index >> 1);
+
+    csd->data()[sizeof(kStaticESDS) + 1] =
+        ((sampling_freq_index << 7) & 0x80) | (channel_configuration << 3);
+
+    meta->setData(kKeyESDS, 0, csd->data(), csd->size());
+#endif
+    return meta;
+}
 
 bool ExtractDimensionsFromVOLHeader(
         const uint8_t *data, size_t size, int32_t *width, int32_t *height) {

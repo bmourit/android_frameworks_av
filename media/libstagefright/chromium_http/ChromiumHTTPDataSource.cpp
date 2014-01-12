@@ -347,4 +347,3 @@ status_t ChromiumHTTPDataSource::UpdateProxyConfig(
 }
 
 }  // namespace android
-

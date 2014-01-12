@@ -98,6 +98,7 @@ public:
     void getSupportedPictureSizes(Vector<Size> &sizes) const;
     void setPictureFormat(const char *format);
     const char *getPictureFormat() const;
+    void getMeteringAreaCenter(int * x, int *y) const;
 
     void dump() const;
     status_t dump(int fd, const Vector<String16>& args) const;
@@ -505,6 +506,7 @@ public:
     // captured pictures.
     // Example value: "true" or "false". Read only.
     static const char KEY_VIDEO_SNAPSHOT_SUPPORTED[];
+    static const char KEY_FULL_VIDEO_SNAP_SUPPORTED[];
 
     // The state of the video stabilization. If set to true, both the
     // preview stream and the recorded video stream are stabilized by
@@ -528,6 +530,13 @@ public:
     // Supported modes for special effects with light.
     // Example values: "lowlight,hdr".
     static const char KEY_LIGHTFX[];
+
+#ifdef HAVE_ISO
+    static const char KEY_SUPPORTED_ISO_MODES[];
+    static const char KEY_ISO_MODE[];
+#endif
+
+    static const char KEY_AE_BRACKET_HDR[];
 
     // Value for KEY_ZOOM_SUPPORTED or KEY_SMOOTH_ZOOM_SUPPORTED.
     static const char TRUE[];
@@ -580,6 +589,7 @@ public:
 
     // Values for scene mode settings.
     static const char SCENE_MODE_AUTO[];
+    static const char SCENE_MODE_ASD[];
     static const char SCENE_MODE_ACTION[];
     static const char SCENE_MODE_PORTRAIT[];
     static const char SCENE_MODE_LANDSCAPE[];

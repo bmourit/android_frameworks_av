@@ -10,7 +10,7 @@
 *******************************************************************************/
 /*!
  * \file     enc_audio.h
- * \brief    定义打开一个音频编码库所需的信息
+ * \brief    definition of the information required to open an audio encoding library
  * \author   kkli
  * \version 1.0
  * \date  2008/9/18
@@ -20,19 +20,20 @@
 
 /*!
  * \brief  
- *      打开音频编码库所需的信息
+ *      Open the information required for the audio encoding library
  */
 typedef struct
 {
-	/*! 采样率，单位hz */
+	/*! Sampling rate, in Hz */
     int sample_rate;
-    /*! 声道数 */
+    /*! Number of channels */
     int channels;
-    /*! 歌曲比特率 */
+    /*! Audio bitrate */
     int bitrate;
-    /*! 编码库格式，一个加载的编码库里可能包含多个格式，例：IMADPCM */
+    /*! Encoding library format. Encoding a loaded library may contain
+     * more than 1 formate, for example: IMADPCM */
     int audio_format;
-    /*! 一次获取到的音频编码后数据播放时长，0说明不限制，单位ms */
+    /*! Encoded data length to get Audio playback. 0 indicates no limit. Unit is in ms */
     int chunk_time;   
 } enc_audio_t;
 
